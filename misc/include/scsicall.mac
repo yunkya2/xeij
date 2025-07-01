@@ -1,0 +1,77 @@
+	.nlist
+  .ifndef __scsicall_mac__
+__scsicall_mac__	equ	1
+
+	.include	iocscall.mac
+	.nlist
+
+;----------------------------------------------------------------
+;
+;	SCSIコール
+;
+;----------------------------------------------------------------
+
+_S_RESET	equ	$00		;SPCの初期化とSCSIバスリセット
+_S_SELECT	equ	$01		;アービトレーションフェーズとセレクションフェーズ(メッセージアウトフェーズなし)
+_S_SELECTA	equ	$02		;アービトレーションフェーズとセレクションフェーズ(メッセージアウトフェーズあり)
+_S_CMDOUT	equ	$03		;コマンドアウトフェーズ
+_S_DATAIN	equ	$04		;データインフェーズ
+_S_DATAOUT	equ	$05		;データアウトフェーズ
+_S_STSIN	equ	$06		;ステータスインフェーズ
+_S_MSGIN	equ	$07		;メッセージインフェーズ
+_S_MSGOUT	equ	$08		;メッセージアウトフェーズ
+_S_PHASE	equ	$09		;フェーズセンス
+_S_LEVEL	equ	$0A		;バージョン
+_S_DATAINI	equ	$0B		;データインフェーズ(ソフト転送)
+_S_DATAOUTI	equ	$0C		;データアウトフェーズ(ソフト転送)
+_S_MSGOUTEXT	equ	$0D		;拡張メッセージアウトフェーズ
+;		equ	$0E
+;		equ	$0F
+;		equ	$10
+;		equ	$11
+;		equ	$12
+;		equ	$13
+;		equ	$14
+;		equ	$15
+;		equ	$16
+;		equ	$17
+;		equ	$18
+;		equ	$19
+;		equ	$1A
+;		equ	$1B
+;		equ	$1C
+;		equ	$1D
+;		equ	$1E
+;		equ	$1F
+_S_INQUIRY	equ	$20		;INQUIRYデータの要求
+_S_READ		equ	$21		;読み込み
+_S_WRITE	equ	$22		;書き出し
+_S_FORMAT	equ	$23		;フォーマット
+_S_TESTUNIT	equ	$24		;動作テスト
+_S_READCAP	equ	$25		;容量確認
+_S_READEXT	equ	$26		;拡張読み込み
+_S_WRITEEXT	equ	$27		;拡張書き出し
+_S_VERIFYEXT	equ	$28		;拡張ベリファイ
+_S_MODESENSE	equ	$29		;モードセンス
+_S_MODESELECT	equ	$2A		;モードセレクト
+_S_REZEROUNIT	equ	$2B		;状態設定
+_S_REQUEST	equ	$2C		;センスデータの要求
+_S_SEEK		equ	$2D		;シーク
+_S_READI	equ	$2E
+_S_STARTSTOP	equ	$2F		;操作許可／操作禁止
+_S_SEJECT	equ	$30
+_S_REASSIGN	equ	$31		;再配置
+_S_PAMEDIUM	equ	$32		;イジェクト許可／イジェクト禁止
+
+_S_DSKINI	equ	$36		;Assign Drive(SASI)
+_S_FORMATB	equ	$37		;Format Block(SASI)
+_S_BADFMT	equ	$38		;Bad Track Format(SASI)
+_S_ASSIGN	equ	$39		;Assign Track(SASI)
+
+SCSI	.macro	num
+	moveq.l	#num,d1
+	IOCS	_SCSIDRV
+	.endm
+
+  .endif  ;__scsicall_mac__
+	.list

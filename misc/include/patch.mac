@@ -1,0 +1,181 @@
+	.nlist
+  .ifndef __patch_mac__
+__patch_mac__	equ	1
+
+;----------------------------------------------------------------
+;
+;	パッチコード
+;
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;	パッチコード
+;		PATCH_START	追加コードの先頭アドレス,追加コードの末尾アドレス
+;		追加コードまたは挿入コード
+;			:
+;		PATCH_END
+;	追加コード
+;		PATCH_TEXT
+;			:
+;		パッチを当てる場所とは別の場所にまとめて配置するコード
+;		パッチファイルのtextセクションに列挙される
+;	挿入コード
+;		PATCH_DATA	名前,先頭アドレス,末尾アドレス,元のデータ
+;			:
+;		パッチを当てる場所に上書きするコード
+;		ヘッダを付けた挿入ブロックがパッチファイルのdataセクションに列挙される
+;		挿入コードの長さは(末尾アドレス+1-先頭アドレス)以下であること
+;		余ったときはMOVEA.L A0,A0で充填される
+;	マクロ
+;		bsr	(address)PATCH_ZL
+;		pea.l	(address)PATCH_ZL(pc)
+;			挿入コードの中から絶対アドレスaddressをプログラムカウンタ間接で参照できるようにする
+;			ワードディスプレースメントで届かない場所を指定しないこと
+;		PATCH_lea	name,label,an
+;		PATCH_dcl	name,label
+;		PATCH_bra	name,label
+;		PATCH_bsr	name,label
+;		PATCH_bcc	name,label
+;		PATCH_bncc	name,label
+;			名前nameの挿入コードの中のラベルlabelを参照する
+;		PATCH_SIZE	label
+;			ラベルlabelに追加データの長さをsetする
+;	パッチファイル
+;		X形式実行ファイルのヘッダ
+;		textセクション
+;			追加コード1
+;			追加コード2
+;				:
+;		dataセクション
+;			追加コードの先頭アドレス
+;			追加コードの末尾アドレス
+;			挿入ブロック1
+;				挿入コード1の先頭アドレス
+;				挿入コード1の末尾アドレス
+;				挿入コード1の元のデータ
+;				挿入コード1の長さ
+;				挿入コード1
+;			挿入ブロック2
+;				:
+;			番兵
+;				0
+;	作成
+;		has060 -o a.o a.s
+;		lk -b 追加コードの先頭アドレス -o a.x a.o
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;パッチコード開始
+PATCH_START	.macro	startAddress,endAddress
+	.sall
+~~patchNumber = 0			;現在の挿入コードの番号。0=なし
+~~patchSection = 0			;現在のセクション。0=text(追加コード),1=data(挿入コード)
+	.lall
+	.text
+	.even
+~~patchStartStartLabel::
+	.data
+	.even
+	.dc.l	startAddress		;追加コードの先頭アドレス
+	.dc.l	endAddress		;追加コードの末尾アドレス
+	.endm
+
+;----------------------------------------------------------------
+;挿入コード開始
+PATCH_DATA	.macro	name,startAddress,endAddress,originalData
+	.sall
+  .if ~~patchSection=1			;挿入コード終了
+	.lall
+~~patchEndLabel_%~~patchNumber:
+	.sall
+  .endif
+~~patchNumber = ~~patchNumber+1
+~~patchStartLabel = ~~patchStartLabel_%~~patchNumber
+~~patchStartLabel_&name = ~~patchStartLabel_%~~patchNumber
+~~patchStartAddress_%~~patchNumber = startAddress
+~~patchStartAddress_&name = ~~patchStartAddress_%~~patchNumber
+~~patchStartAddress = ~~patchStartAddress_%~~patchNumber
+~~patchSection = 1
+	.lall
+	.data
+	.even
+~~patchData_%~~patchNumber:
+	.dc.l	startAddress
+	.dc.l	endAddress
+	.dc.l	originalData
+	.dc.l	~~patchEndLabel_%~~patchNumber-~~patchStartLabel_%~~patchNumber
+~~patchStartLabel_%~~patchNumber:
+	.endm
+
+;----------------------------------------------------------------
+;追加コード開始
+PATCH_TEXT	.macro
+	.sall
+  .if ~~patchSection=1			;挿入コード終了
+	.lall
+~~patchEndLabel_%~~patchNumber:
+	.sall
+  .endif
+~~patchSection = 0
+	.lall
+	.text
+	.even
+	.endm
+
+;----------------------------------------------------------------
+;パッチコード終了
+PATCH_END	.macro
+	.sall
+  .if ~~patchSection=1			;挿入コード終了
+	.lall
+~~patchEndLabel_%~~patchNumber:
+	.sall
+  .endif
+~~patchSection = 0
+	.lall
+	.text
+	.even
+~~patchEndEndLabel:
+	.data
+	.even
+	.dc.l	0
+	.endm
+
+;----------------------------------------------------------------
+;マクロ
+PATCH_ZL	reg	-~~patchStartAddress+~~patchStartLabel
+
+PATCH_lea	.macro	name,label,an
+	lea.l	label-~~patchStartLabel_&name+~~patchStartAddress_&name,an
+	.endm
+
+PATCH_dcl	.macro	name,label
+	.dc.l	label-~~patchStartLabel_&name+~~patchStartAddress_&name
+	.endm
+
+  .irp %cc,ra,sr,hi,ls,cc,hs,cs,lo,ne,nz,eq,ze,vc,vs,pl,mi,ge,lt,gt,le
+PATCH_b%cc	.macro	name,label
+	.sall
+	.sizem	sz
+	.lall
+	b%cc&&sz	(label-~~patchStartLabel_&&name+~~patchStartAddress_&&name)PATCH_ZL
+	.endm
+  .endm
+
+  .irp %cc,hi,ls,cc,hs,cs,lo,ne,nz,eq,ze,vc,vs,pl,mi,ge,lt,gt,le
+PATCH_bn%cc	.macro	name,label
+	.sall
+	.sizem	sz
+	.lall
+	bn%cc&&sz	(label-~~patchStartLabel_&&name+~~patchStartAddress_&&name)PATCH_ZL
+	.endm
+  .endm
+
+PATCH_SIZE	.macro	label
+label = ~~patchEndEndLabel-~~patchStartStartLabel
+	.endm
+
+;----------------------------------------------------------------
+
+  .endif  ;__patch_mac__
+	.list

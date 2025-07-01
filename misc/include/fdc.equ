@@ -1,0 +1,63 @@
+	.nlist
+  .ifndef __fdc_equ__
+__fdc_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	FDC/FDD
+;
+;----------------------------------------------------------------
+
+;FDCステータス/コマンド
+;	RQM|DIO(OUT/IN)|NDM|CB|D3B|D2B|D1B|D0B
+FDC_STATUS		equ	$00E94001
+FDC_RQM_BIT		equ	 7
+FDC_RQM_MASK		equ	%10000000	;RQM
+FDC_DIO_BIT		equ	  6
+FDC_DIO_MASK		equ	%01000000	;DIO。0=OUT,1=IN
+FDC_NDM_BIT		equ	   5
+FDC_NDM_MASK		equ	%00100000	;NDM
+FDC_CB_BIT		equ	    4
+FDC_CB_MASK		equ	%00010000	;CB
+FDC_D3B_BIT		equ	     3
+FDC_D3B_MASK		equ	%00001000	;D3B
+FDC_D2B_BIT		equ	      2
+FDC_D2B_MASK		equ	%00000100	;D2B
+FDC_D1B_BIT		equ	       1
+FDC_D1B_MASK		equ	%00000010	;D1B
+FDC_D0B_BIT		equ	        0
+FDC_D0B_MASK		equ	%00000001	;D0B
+
+;FDCデータ/コマンド
+FDC_DATA		equ	$00E94003
+
+;FDD状態/機能
+;	挿入|誤挿入|------
+FDD_STATUS		equ	$00E94005	;FDD状態
+FDD_INSERTED_BIT	equ	 7
+FDD_INSERTED_MASK	equ	%10000000	;挿入
+FDD_INCORRECT_BIT	equ	  6
+FDD_INCORRECT_MASK	equ	%01000000	;誤挿入
+;	点滅|排出禁止|排出|-|選択####
+FDD_FUNCTION		equ	$00E94005	;FDD機能
+FDD_BLINK_BIT		equ	 7
+FDD_BLINK_MASK		equ	%10000000	;点滅
+FDD_PROHIBIT_BIT	equ	  6
+FDD_PROHIBIT_MASK	equ	%01000000	;排出禁止
+FDD_EJECT_BIT		equ	   5
+FDD_EJECT_MASK		equ	%00100000	;排出
+;				     3210
+FDD_SELECT_MASK		equ	%00001111	;選択####
+
+;FDD選択
+;	モータON|--|2DD|--|ドライブ##
+FDD_CONTROL		equ	$00E94007	;FDD選択
+FDD_MOTOR_BIT		equ	 7
+FDD_MOTOR_MASK		equ	%10000000	;モータON
+FDD_2DD_BIT		equ	   5
+FDD_2DD_MASK		equ	%00100000	;2DD
+;				       10
+FDD_DRIVE_MASK		equ	%00000011	;ドライブ##
+
+  .endif  ;__fdc_equ__
+	.list

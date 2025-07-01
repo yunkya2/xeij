@@ -1,0 +1,215 @@
+	.nlist
+  .ifndef __dmac_equ__
+__dmac_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	HD63450 DMAC
+;
+;----------------------------------------------------------------
+
+;ベースアドレス
+DMAC_0_BASE		equ	$00E84000	;DMACチャンネル0ベースアドレス。フロッピーディスク
+DMAC_1_BASE		equ	$00E84040	;DMACチャンネル1ベースアドレス。ハードディスク
+DMAC_2_BASE		equ	$00E84080	;DMACチャンネル2ベースアドレス。ユーザ
+DMAC_3_BASE		equ	$00E840C0	;DMACチャンネル3ベースアドレス。ADPCM
+
+;Channel Status Register (R/W)
+;	チャンネルステータスレジスタ
+;	CSRに$FFを書き込むとクリアされる
+DMAC_CSR		equ	$00
+;	COC|BLC|NDT|ERR|ACT|DIT|PCT|PCS
+DMAC_CSR_COC_BIT	equ	 7
+DMAC_CSR_COC		equ	%10000000	;Channel Operation Complete。1=チャンネル動作完了。正常終了または異常終了
+DMAC_CSR_BLC_BIT	equ	  6
+DMAC_CSR_BLC		equ	%01000000	;BLock transfer Complete。1=ブロック転送完了。MTCが0になったがCNTで継続した
+DMAC_CSR_NDT_BIT	equ	   5
+DMAC_CSR_NDT		equ	%00100000	;Normal Device Termination。1=デバイス終了。~DONEがアサートされた
+DMAC_CSR_ERR_BIT	equ	    4
+DMAC_CSR_ERR		equ	%00010000	;ERRor。1=エラーあり
+DMAC_CSR_ACT_BIT	equ	     3
+DMAC_CSR_ACT		equ	%00001000	;channel ACTive。1=チャンネル動作中
+DMAC_CSR_DIT_BIT	equ	      2
+DMAC_CSR_DIT		equ	%00000100	;~DONE Input Transition。1=~DONE入力があった
+DMAC_CSR_PCT_BIT	equ	       1
+DMAC_CSR_PCT		equ	%00000010	;~PCL Transition。1=~PCLの立下りがあった
+DMAC_CSR_PCS_BIT	equ	        0
+DMAC_CSR_PCS		equ	%00000001	;~PCL Status。~PCLの状態
+
+;Channel Error Register (R)
+;	チャンネルエラーレジスタ
+;	CERはread-only
+DMAC_CER		equ	$01
+;	---|EC#####
+DMAC_CER_EC		equ	%00011111	;Error Code
+DMAC_NO_ERROR		equ	%00000000	;  0=エラーなし
+DMAC_CONFIGURATION	equ	%00000001	;  1=コンフィギュレーションエラー
+DMAC_TIMING_ERROR	equ	%00000010	;  2=動作タイミングエラー
+DMAC_ADDRESS_MEMORY	equ	%00000101	;  5=アドレスエラー(メモリアドレス)
+DMAC_ADDRESS_DEVICE	equ	%00000110	;  6=アドレスエラー(デバイスアドレス)
+DMAC_ADDRESS_BASE	equ	%00000111	;  7=アドレスエラー(ベースアドレス)
+DMAC_BUS_ERROR_MEMORY	equ	%00001001	;  9=バスエラー(メモリアドレス)
+DMAC_BUS_ERROR_DEVICE	equ	%00001010	;  10=バスエラー(デバイスアドレス)
+DMAC_BUS_ERROR_BASE	equ	%00001011	;  11=バスエラー(ベースアドレス)
+DMAC_COUNT_ERROR_MEMORY	equ	%00001101	;  13=カウントエラー(メモリカウンタ)
+DMAC_COUNT_ERROR_BASE	equ	%00001111	;  15=カウントエラー(ベースカウンタ)
+DMAC_EXTERNAL_ABORT	equ	%00010000	;  16=外部強制停止
+DMAC_SOFTWARE_ABORT	equ	%00010001	;  17=ソフトウェア強制停止
+
+;Device Control Register (R/W)
+;	デバイスコントロールレジスタ
+;	DCRに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_DCR		equ	$04
+;	XRM##|DTYP##|DPS|-|PCL##
+DMAC_DCR_XRM		equ	%11000000	;eXternal Request Mode
+DMAC_BURST_TRANSFER	equ	%00000000	;  0=バースト転送モード
+DMAC_NO_HOLD_CYCLE	equ	%10000000	;  2=ホールドなしサイクルスチールモード
+DMAC_HOLD_CYCLE		equ	%11000000	;  3=ホールドありサイクルスチールモード
+DMAC_DCR_DTYP		equ	%00110000	;Device TYPe
+DMAC_HD68000_COMPATIBLE	equ	%00000000	;  0=HD68000コンパチブル(デュアルアドレスモード)
+DMAC_HD6800_COMPATIBLE	equ	%00010000	;  1=HD6800コンパチブル(デュアルアドレスモード)
+DMAC_ACK_DEVICE		equ	%00100000	;  2=~ACK付きデバイス(シングルアドレスモード)
+DMAC_READY_ACK_DEVICE	equ	%00110000	;  3=~ACK,~READY付きデバイス(シングルアドレスモード)
+DMAC_DCR_DPS_BIT	equ	     3
+DMAC_DCR_DPS		equ	%00001000	;Device Port Size
+DMAC_8_BIT_PORT		equ	%00000000	;  0=8ビットポート
+DMAC_16_BIT_PORT	equ	%00001000	;  1=16ビットポート
+DMAC_DCR_PCL		equ	%00000011	;Peripheral Control Line
+DMAC_STATUS_INPUT	equ	%00000000	;  0=STATUS入力
+DMAC_INTERRUPT_INPUT	equ	%00000001	;  1=割り込みありSTATUS入力
+DMAC_1_8_START_PULSE	equ	%00000010	;  2=1/8スタートパルス
+DMAC_ABORT_INPUT	equ	%00000011	;  3=ABORT入力
+
+;Operation Control Register (R/W)
+;	オペレーションコントロールレジスタ
+DMAC_OCR		equ	$05
+;	DIR|BTD|SIZE##|CHAIN##|REQG##
+DMAC_OCR_DIR_BIT	equ	 7
+DMAC_OCR_DIR		equ	%10000000	;DIRection
+DMAC_MEMORY_TO_DEVICE	equ	%00000000	;  0=メモリ→デバイス。DMAC_MAR→DMAC_DAR
+DMAC_DEVICE_TO_MEMORY	equ	%10000000	;  1=デバイス→メモリ。DMAC_DAR→DMAC_MAR
+DMAC_OCR_BTD_BIT	equ	  6
+DMAC_OCR_BTD		equ	%01000000	;multi Block Transfer with ~DONE mode
+DMAC_OCR_SIZE		equ	%00110000	;operand SIZE
+DMAC_8_BIT_OPERAND	equ	%00000000	;  0=8ビットオペランド
+DMAC_16_BIT_OPERAND	equ	%00010000	;  1=16ビットオペランド
+DMAC_32_BIT_OPERAND	equ	%00100000	;  2=32ビットオペランド
+DMAC_UNPACKED_OPERAND	equ	%00110000	;  3=パックなし8ビットオペランド
+DMAC_OCR_CHAIN		equ	%00001100	;CHAINing operation
+DMAC_NO_CHAINING	equ	%00000000	;  0=チェインなし
+DMAC_ARRAY_CHAIN	equ	%00001000	;  2=アレイチェイン
+DMAC_LINK_ARRAY_CHAIN	equ	%00001100	;  3=リンクアレイチェイン
+DMAC_OCR_REQG		equ	%00000011	;DMA REQuest Generation method
+DMAC_AUTO_REQUEST	equ	%00000000	;  0=オートリクエスト限定速度。転送中にバスを開放する
+DMAC_AUTO_REQUEST_MAX	equ	%00000001	;  1=オートリクエスト最大速度。転送中にバスを開放しない
+DMAC_EXTERNAL_REQUEST	equ	%00000010	;  2=外部転送要求
+DMAC_DUAL_REQUEST	equ	%00000011	;  3=最初はオートリクエスト、2番目から外部転送要求
+
+;Sequence Control Register (R/W)
+;	シーケンスコントロールレジスタ
+;	SCRに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_SCR		equ	$06
+;	----|MAC##|DAC##
+DMAC_SCR_MAC		equ	%00001100	;Memory Address register Count
+DMAC_FIXED_MEMORY	equ	%00000000	;  0=メモリアドレス固定
+DMAC_INCREMENT_MEMORY	equ	%00000100	;  1=メモリアドレスインクリメント
+DMAC_DECREMENT_MEMORY	equ	%00001000	;  2=メモリアドレスデクリメント
+DMAC_SCR_DAC		equ	%00000011	;Device Address register Count
+DMAC_FIXED_DEVICE	equ	%00000000	;  0=デバイスアドレス固定
+DMAC_INCREMENT_DEVICE	equ	%00000001	;  1=デバイスアドレスインクリメント
+DMAC_DECREMENT_DEVICE	equ	%00000010	;  2=デバイスアドレスデクリメント
+
+;Channel Control Register (R/W)
+;	チャンネルコントロールレジスタ
+DMAC_CCR		equ	$07
+;	STR|CNT|HLT|SAB|ITE|---
+DMAC_CCR_STR_BIT	equ	 7
+DMAC_CCR_STR		equ	%10000000	;STaRt operation。1=動作開始
+DMAC_CCR_CNT_BIT	equ	  6
+DMAC_CCR_CNT		equ	%01000000	;CoNTinue operation。1=コンティニューあり
+DMAC_CCR_HLT_BIT	equ	   5
+DMAC_CCR_HLT		equ	%00100000	;HaLT operation。1=動作一時停止
+DMAC_CCR_SAB_BIT	equ	    4
+DMAC_CCR_SAB		equ	%00010000	;Software ABort。1=動作中止
+DMAC_CCR_ITE_BIT	equ	     3
+DMAC_CCR_ITE		equ	%00001000	;InTerrupt Enable。1=割り込み許可
+
+;Memory Transfer Counter (R/W)
+;	メモリトランスファカウンタ
+;	MTCに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_MTC		equ	$0A
+
+;Memory Address Register (R/W)
+;	メモリアドレスレジスタ
+;	MARに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_MAR		equ	$0C
+
+;Device Address Register (R/W)
+;	デバイスアドレスレジスタ
+;	DARに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_DAR		equ	$14
+
+;Base Transfer Counter (R/W)
+;	ベーストランスファカウンタ
+DMAC_BTC		equ	$1A
+
+;Base Address Register (R/W)
+;	ベースアドレスレジスタ
+DMAC_BAR		equ	$1C
+
+;Normal Interrupt Vector (R/W)
+;	ノーマルインタラプトベクタ
+DMAC_NIV		equ	$25
+
+;Error Interrupt Vector (R/W)
+;	エラーインタラプトベクタ
+DMAC_EIV		equ	$27
+
+;Memory Function Code (R/W)
+;	メモリファンクションコード
+;	MFCに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_MFC		equ	$29
+;	-----|FC###
+DMAC_USER_DATA		equ	%00000001	;  1=ユーザデータ
+DMAC_USER_CODE		equ	%00000010	;  2=ユーザコード
+DMAC_SUPERVISOR_DATA	equ	%00000101	;  5=スーパーバイザデータ
+DMAC_SUPERFISOR_CODE	equ	%00000110	;  6=スーパーバイザコード
+
+;Channel Priority Register (R/W)
+;	チャンネルプライオリティレジスタ
+;	0=高,1,2,3=低
+DMAC_CPR		equ	$2D
+;	------|CP##
+DMAC_HIGHEST_PRIORITY	equ	0
+DMAC_HIGHER_PRIORITY	equ	1
+DMAC_LOWER_PRIORITY	equ	2
+DMAC_LOWEST_PRIORITY	equ	3
+
+;Device Function Code (R/W)
+;	デバイスファンクションコード
+;	DFCに動作中(ACT!=0)に書き込むと動作タイミングエラーになる
+DMAC_DFC		equ	$31
+;	-----|FC###
+
+;Base Function Code (R/W)
+;	ベースファンクションコード
+DMAC_BFC		equ	$39
+;	-----|FC###
+
+;General Control Register (R/W)
+;	ジェネラルコントロールレジスタ
+DMAC_GCR		equ	$FF
+;	----|BT##|BR##
+DMAC_GCR_BT		equ	%00001100	;Burst Time
+DMAC_BURST_16_CLK	equ	%00000000	;  0=16clk
+DMAC_BUTST_32_CLK	equ	%00000100	;  1=32clk
+DMAC_BURST_64_CLK	equ	%00001000	;  2=64clk
+DMAC_BUTST_128_CLK	equ	%00001100	;  3=128clk
+DMAC_GCR_BR		equ	%00000011	;Bandwidth Ratio
+DMAC_RATIO_1_2		equ	%00000000	;  0=1/2
+DMAC_RATIO_1_4		equ	%00000001	;  1=1/4
+DMAC_RATIO_1_8		equ	%00000010	;  2=1/8
+DMAC_RATIO_1_16		equ	%00000011	;  3=1/16
+
+  .endif  ;__dmac_equ__
+	.list

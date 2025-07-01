@@ -1,0 +1,91 @@
+--------------------------------------------------------------------------------
+XEiJ License (2023-06-08)
+
+  You can use, modify and redistribute the XEiJ (X68000 Emulator in Java) if the
+  following conditions are met.
+
+  1. The XEiJ and its derivatives must be distributed free of charge.
+
+  2. The XEiJ and its derivatives must be distributed along with those source
+     code that is necessary to recompile them.
+
+  3. You must attach this text to derivatives of the XEiJ.
+
+Copyright
+
+  Source code and data of the XEiJ except for the following parts are
+  copyrighted by Makoto Kamada.
+
+  1. Basic software products for X68000 that were distributed free of charge,
+     such as IPLROM.DAT, HUMAN.SYS, and so on, are copyrighted by right-holder
+     companies.
+     http://retropc.net/x68000/software/sharp/
+
+  2. Emulation algorithm of YM2151 is derived from the ymfm.
+     https://github.com/aaronsgiles/ymfm
+
+  3. jSerialComm is used to access the serial port.
+     https://fazecast.github.io/jSerialComm/
+
+  4. Default font data is composed of fonts designed by Keitarou Hiraki and Num
+     Kadoma.
+     https://hp.vector.co.jp/authors/VA000874/
+     https://littlelimit.net/
+
+  5. IPL programs that are written into 2HDE and 2HS floppy disk images in
+     formatting are copyrighted by 6no8rou.
+
+  6. The default key assignments for macOS and Linux are based on the data
+     provided by yuduki, tantan and saku39.
+
+Disclaimer
+
+  XEiJ is provided as is. No warranty against disadvantages caused by using
+  and/or inability to use this software is given regardless of whether it had
+  been able to be foreseen.
+
+--------------------------------------------------------------------------------
+XEiJ 使用許諾条件 (2023-06-08)
+
+  XEiJ (X68000 Emulator in Java) は以下の条件で使用し、改変し、再配布することが
+  できます。
+
+  1. XEiJ とその派生物は無償で配布されなければなりません。
+
+  2. XEiJ とその派生物はそれらを再コンパイルするために必要なソースコードと共に配
+     布されなければなりません。
+
+  3. XEiJ の派生物には本文書を添付しなければなりません。
+
+著作権
+
+  以下の部分を除く XEiJ のソースコードとデータは Makoto Kamada の著作物です。
+
+  1. IPLROM.DAT、HUMAN.SYS などの無償公開された X68000 の基本ソフトウェア製品は
+     権利各社の著作物です。
+     http://retropc.net/x68000/software/sharp/
+
+  2. YM2151 のエミュレーションアルゴリズムは ymfm に由来します。
+     https://github.com/aaronsgiles/ymfm
+
+  3. シリアルポートにアクセスするために jSerialComm を使用しています。
+     https://fazecast.github.io/jSerialComm/
+
+  4. デフォルトのフォントデータは平木敬太郎氏と門真なむ氏によってデザインされた
+     フォントで構成されています。
+     https://hp.vector.co.jp/authors/VA000874/
+     https://littlelimit.net/
+
+  5. 2HDE および 2HS フロッピーディスクイメージをフォーマットするときに書き込ま
+     れる IPL プログラムは 6no8rou 氏の著作物です。
+
+  6. macOS および Linux 用のキー割り当ての初期値は yuduki さん、tantan さんおよ
+     び saku39 さんに提供していただいたデータを元にしています。
+
+免責事項
+
+  XEiJ は現状のまま (AS-IS) 提供されます。このソフトウェアを用いたことあるいは用
+  いることができなかったことで不利益が生じたとしても、それが予見可能だったかどう
+  かに関わらず補償されません。
+
+--------------------------------------------------------------------------------

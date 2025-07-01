@@ -1,0 +1,124 @@
+	.nlist
+  .ifndef __sram_equ__
+__sram_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	SRAM
+;
+;----------------------------------------------------------------
+
+SRAM_START		equ	$00ED0000	;SRAMの先頭
+SRAM_MAGIC		equ	$00ED0000	;.b[8] SRAMマジック。'Ｘ68000W'($82773638,$30303057)=初期化済み
+SRAM_MEMORY_SIZE	equ	$00ED0008	;.l メモリサイズ
+SRAM_ROM_BOOT_HANDLE	equ	$00ED000C	;.l ROM起動ハンドル
+SRAM_SRAM_BOOT_ADDRESS	equ	$00ED0010	;.l SRAM起動アドレス
+SRAM_ALARM_LIFE		equ	$00ED0014	;.l アラームで起動した後OFFするまでの時間(分)
+SRAM_BOOT_DEVICE	equ	$00ED0018	;.w 起動デバイス。$0000=STD,$8xxx=HD,$9xxx=FD,$Axxx=ROM,$Bxxx=SRAM
+SRAM_AUX_MODE		equ	$00ED001A	;.w RS-232Cモード
+;				$00ED001A	;.b RS-232Cモード(上位)。S##(2/1/1.5/2)|P##(N/O/N/E)|L##(5/6/7/8)|XON|SISO
+;				$00ED001B	;.b RS-232Cモード(下位)。CTSRTS|---|B####(75/150/300/600/1200/2400/4800/9600/19200)
+SRAM_LED		equ	$00ED001C	;.b 起動時のLEDの状態
+SRAM_CRTMOD		equ	$00ED001D	;.b 起動時の画面モード。0～19
+SRAM_ALARM_ADDRESS	equ	$00ED001E	;.l アラーム起動アドレス
+SRAM_ALARM_TIME		equ	$00ED0022	;.l アラーム起動時刻。曜(0～6)<<24|日(BCD)<<16|時(BCD)<<8|分(BCD)
+SRAM_ALERM_FLAG		equ	$00ED0026	;.b アラームフラグ。0=許可,7=禁止
+SRAM_OPT2_TVCTRL	equ	$00ED0027	;.b OPT.2キーでテレビコントロール。0=する,1=しない
+SRAM_CONTRAST		equ	$00ED0028	;.b コントラスト
+SRAM_EJECT		equ	$00ED0029	;.b 電源OFFのときFDをイジェクト。0=しない,1=する
+SRAM_TVCTRL		equ	$00ED002A	;.b 電源OFFのときのテレビコントロール
+SRAM_KANA		equ	$00ED002B	;.b キーボードのかな配列。0=旧JIS,1=五十音
+SRAM_LCD		equ	$00ED002C	;.b 電卓の文字。0=LCD,1=標準
+SRAM_SRAM_USAGE		equ	$00ED002D	;.b SRAM使用モード。0=なし,1=RAMディスク,2=プログラム
+SRAM_TEXT_PALET_0	equ	$00ED002E	;.w テキストパレット0
+SRAM_TEXT_PALET_1	equ	$00ED0030	;.w テキストパレット1
+SRAM_TEXT_PALET_2	equ	$00ED0032	;.w テキストパレット2
+SRAM_TEXT_PALET_3	equ	$00ED0034	;.w テキストパレット3
+SRAM_TEXT_PALET_4	equ	$00ED0036	;.w テキストパレット4～7
+SRAM_TEXT_PALET_8	equ	$00ED0038	;.w テキストパレット8～15
+SRAM_KEY_START		equ	$00ED003A	;.b キーリピート開始。200+100*n(ms)
+SRAM_KEY_INTERVAL	equ	$00ED003B	;.b キーリピート間隔。30+5*n*n(ms)
+SRAM_PRINTER_TIMEOUT	equ	$00ED003C	;.l プリンタタイムアウト時間
+SRAM_LIFE_TIME		equ	$00ED0040	;.l 稼働時間
+SRAM_LIFE_COUNT		equ	$00ED0044	;.l 電源OFFの回数
+SRAM_ROMDISK_ADDRESS	equ	$00ED0048	;.l ROMDISKの先頭アドレス
+SRAM_ROMDISK_BPB	equ	$00ED004C	;.b[12] ROMDISKのBPB
+;			equ	$00ED004C	;.w 1セクタあたりのバイト数
+;			equ	$00ED004E	;.b 1クラスタあたりのセクタ数
+;			equ	$00ED004F	;.b FAT領域の個数
+;			equ	$00ED0050	;.w 予約領域のセクタ数
+;			equ	$00ED0052	;.w ルートディレクトリに入るエントリ数
+;			equ	$00ED0054	;.w 全領域のセクタ数
+;			equ	$00ED0056	;.b メディアバイト
+;			equ	$00ED0057	;.b 1個のFAT領域に使用するセクタ数
+SRAM_ROMDB		equ	$00ED0058	;.b ROMデバッガ起動フラグ。0=OFF,-1=AUX,1=CON[16]
+SRAM_XCHG		equ	$00ED0059	;.b 文字変換フラグ。-----|$7C｜/$82￤|$7E￣/$81～|$5C￥/$80＼
+SRAM_HDMAX		equ	$00ED005A	;.b ハードディスクが何台繋がっているか
+
+;HUYE HUMANPn
+SRAM_FDDMAX		equ	$00ED005B	;.b FDDのドライブ数。1～4。0は2と見なす
+
+;RSDRV
+;	S##(2/1/1.5/2)|P##(N/O/N/E)|L##(5/6/7/8)|XON|SISO
+;	CTSRTS|---|B####(75/150/300/600/1200/2400/4800/9600/19200)
+SRAM_AUX2_MODE		equ	$00ED005C	;.w AUX2モード
+SRAM_AUX3_MODE		equ	$00ED005E	;.w AUX3モード
+SRAM_AUX4_MODE		equ	$00ED0060	;.w AUX4モード
+SRAM_AUX5_MODE		equ	$00ED0062	;.w AUX5モード
+
+;SCSI
+SRAM_SCSI_MAGIC		equ	$00ED006F	;.b SCSIマジック。'V'($56)=初期化済み
+SRAM_SCSI_MODE		equ	$00ED0070	;.b SCSI設定。ブロック|タイプ無視|バースト|ソフト|拡張|本体###
+SRAM_SCSI_BLOCK_BIT	equ	7
+SRAM_SCSI_IGNORE_BIT	equ	6
+SRAM_SCSI_BURST_BIT	equ	5
+SRAM_SCSI_SOFT_BIT	equ	4
+SRAM_SCSI_EXTENSION_BIT	equ	3
+SRAM_SCSI_SASI_FLAG	equ	$00ED0071	;.b SASIフラグ。SASI機器が接続されているSCSI-IDのビットをセット
+
+;SX-WINDOW
+SRAM_SX_MAGIC		equ	$00ED0072	;.b[2] SX-WINDOWマジック。'SX'($5358)=初期化済み
+SRAM_SX_MOUSE_SPEED	equ	$00ED0074	;.b SXマウス速度。3(遅い)～10(速い)
+SRAM_SX_DOUBLE_CLICK	equ	$00ED0075	;.b SXダブルクリック間隔。0(短い)～12(長い)
+SRAM_SX_PALET_H		equ	$00ED0076	;.b SXパレットH。0～191
+SRAM_SX_PALET_S		equ	$00ED0077	;.b SXパレットS。0～31
+SRAM_SX_PALET_V		equ	$00ED0078	;.b[3] SXパレットV0(0～31),V1(0～31),V2(0～31),V3(0～31)。V0<<3|V1>>2,V1<<6|V2<<1|V3>>4,V3<<4
+SRAM_SX_PRINTER_ID	equ	$00ED007B	;.b SXプリンタID。0～8
+SRAM_SX_SYSTEM		equ	$00ED007C	;.b SXシステム。--|バージョン(1.0/1.1/3.0/-)|--|DIRDTOP.SX保存|SYSDTOP.SX保存
+SRAM_SX_BACKGROUND	equ	$00ED007D	;.b SX背景。システム0/システム1/ユーザ
+SRAM_SX_SCREEN_MODE	equ	$00ED007E	;.b SX画面モード。768x512x16/CRTMOD|実画面|CRTMOD######
+;			equ	$00ED007F	;.b SX予約
+SRAM_SX_MARGIN_LEFT	equ	$00ED0080	;.w SXウィンドウマージン左
+SRAM_SX_MARGIN_TOP	equ	$00ED0082	;.w SXウィンドウマージン上
+SRAM_SX_MARGIN_RIGHT	equ	$00ED0084	;.w SXウィンドウマージン右
+SRAM_SX_MARGIN_BOTTOM	equ	$00ED0086	;.w SXウィンドウマージン下
+
+;X68030
+SRAM_CACHE		equ	$00ED0090	;.b キャッシュ設定。------|データ|命令
+SRAM_STARTUP_SOUND	equ	$00ED0091	;.b 起動音。0=なし,1=あり
+SRAM_XF3_WAIT		equ	$00ED0092	;.b XF3キーのメモリアクセスウェイト。10=10MHz相当
+SRAM_XF4_WAIT		equ	$00ED0093	;.b XF4キーのメモリアクセスウェイト。4=16MHz相当
+
+;VENUS-X
+SRAM_VENUSX		equ	$00ED0094	;.b VENUS-X設定。CE|--|CC|WW|RW|FS|KT
+
+;XEiJ
+SRAM_XEIJ		equ	$00ED0095	;.b [XEiJ] XEiJ。0110|--|QUIET|LCD
+SRAM_XEIJ_QUIET_BIT	equ	       1	;起動画面。0=表示する,1=表示しない
+SRAM_XEIJ_QUIET		equ	%00000010
+SRAM_XEIJ_LCD_BIT	equ	        0	;0=CRT向け,1=LCD向け
+SRAM_XEIJ_LCD		equ	%00000001
+
+;Mach-2
+SRAM_MACH2_MAGIC	equ	$00ED0098	;.w Mach-2マジック。'Ch'($4368)=初期化済み
+SRAM_MACH2_SYNC		equ	$00ED009A	;.b 同期転送周期上限
+SRAM_MACH2_MODE		equ	$00ED009B	;.b 設定。----|パリティチェック|限定速度|バースト転送|RAM
+SRAM_MACH2_DEVICE	equ	$00ED00A0	;.b[8] デバイスフラグ。同期転送|----|INITIATOR ID=ドライブとして認識しない###
+SRAM_MACH2_SOFT		equ	$00ED00A8	;.l ソフト転送領域フラグ(512KB単位)
+SRAM_MACH2_NORMAL	equ	$00ED00AC	;.l X68000通常バスサイクル領域フラグ(512KB単位)
+
+SRAM_PROGRAM_START	equ	$00ED0100	;SRAM常駐プログラムの先頭
+SRAM_END		equ	$00ED4000	;SRAMの末尾+1
+
+  .endif  ;__sram_equ__
+	.list

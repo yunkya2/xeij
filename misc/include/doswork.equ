@@ -1,0 +1,78 @@
+	.nlist
+  .ifndef __doswork_equ__
+__doswork_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	DOSワークエリア
+;
+;----------------------------------------------------------------
+
+DOS_MEMORY_LIMIT	equ	$1C00		;.l _MALLOCできるメモリ空間の末尾アドレス+1
+DOS_MEMORY_START	equ	$1C04		;.l _MALLOCできるメモリ空間の先頭アドレス[[302]$00008372]
+DOS_CALL_LEVEL		equ	$1C08		;.w DOSコールのレベル(ここから_INDOSFLG)
+DOS_CALL_NUMBER		equ	$1C0A		;.b レベル0で入ったDOSコール番号
+DOS_NEWFAT_MODE		equ	$1C0B		;.b newfatのモード(0または2)[0]
+DOS_RETRY_COUNT		equ	$1C0C		;.w リトライ回数[3]
+DOS_RETRY_INTERVAL	equ	$1C0E		;.w リトライ待ち時間[100]
+DOS_VERIFY_MODE		equ	$1C10		;.w verifyのモード(0=off,1=on)[0]
+DOS_BREAK_MODE		equ	$1C12		;.b breakのモード(0=off,1=on,2=kill)[2]
+DOS_CTRL_P_MODE		equ	$1C13		;.b CTRL+Pのモード(0=off,-1=on)[0]
+DOS_CHANGE_PR_PENDING	equ	$1C14		;.b DOSコール終了時にスレッドを切り替えるか(0=no,1=yes)[0]
+DOS_CURRENT_DRIVE	equ	$1C15		;.b カレントドライブ番号(0=A:)
+DOS_TRAP_11_FLAG	equ	$1C16		;.b TRAP#11(BREAK)処理フラグ(処理中|------|BREAK(CTRL+C)/SHIFT+BREAK(CTRL+S))[0]
+DOS_TRAP_10_FLAG	equ	$1C17		;.b TRAP#10発生フラグ(0=off,1=on)
+DOS_TRAP_10_D0		equ	$1C18		;.l TRAP#10に渡されたD0.L
+DOS_LAST_DEVICE_HEAD	equ	$1C1C		;.l 最後のデバイスドライバのデバイスヘッダ
+DOS_HUMAN_MEMORY	equ	$1C20		;.l Humanのメモリ管理テーブルの先頭アドレス[[302]$00008372]
+DOS_FREE_AREA		equ	$1C24		;.l 空きエリアの先頭アドレス
+DOS_PROCESS_HANDLE	equ	$1C28		;.l:実行中のプロセスのメモリ管理テーブルのハンドル[[302]$00013D0A]
+DOS_HANDLER_FCB_START	equ	$1C2C		;.l ハンドラFCB変換テーブルの先頭(1個2バイト)[0]
+DOS_FCB_START		equ	$1C30		;.l FCBテーブルの先頭(1個96バイト)[0]
+DOS_BUFFER_START	equ	$1C34		;.l buffersのバッファを初期化する直前の空きエリアの先頭アドレス
+DOS_DRIVE_START		equ	$1C38		;.l ドライブ管理テーブルの先頭アドレス
+DOS_INNER_DPB_START	equ	$1C3C		;.l 内部DPBテーブルの先頭アドレス
+DOS_SHARE_START		equ	$1C40		;.l share管理領域の先頭アドレス
+DOS_COMMON_START	equ	$1C44		;.l common管理領域の先頭アドレス
+DOS_COMMON_USED		equ	$1C48		;.l common管理領域の使用している末尾のアドレス+1
+DOS_COMMON_END		equ	$1C4C		;.l common管理領域の末尾のアドレス+1
+DOS_MAIN_THREAD		equ	$1C50		;.l メインスレッドのスレッド管理テーブルの先頭アドレス
+DOS_CURRENT_THREAD	equ	$1C54		;.l 現在のスレッドのスレッド管理テーブルの先頭アドレス
+DOS_MAX_THREADS_1	equ	$1C58		;.w processのスレッド数-1
+DOS_CURRENT_THREADS_1	equ	$1C5A		;.w 現在動作中のスレッド数-1
+DOS_LEVEL_0_SSP		equ	$1C5C		;.l DOSコールにレベル0で入ったときのSSP。$0000:D1-D7/A0-A6,$0038:SR,$003A:PC
+DOS_ABORT_SR		equ	$1C60		;.w アボート時のSR
+DOS_ABORT_SSP		equ	$1C62		;.l アボート時のSSP
+DOS_PREV_TRAP_11	equ	$1C66		;.l 元のTRAP#11ベクタ
+DOS_PREV_TRAP_10	equ	$1C6A		;.l 元のTRAP#10ベクタ
+DOS_FILES_MAX_2		equ	$1C6E		;.w filesのファイル数+2
+DOS_BUFFERS_SIZE	equ	$1C70		;.w buffersのバッファ容量[$0400]
+DOS_BUFFERS_COUNT	equ	$1C72		;.b buffersのバッファ数
+DOS_LASTDRIVE_NUMBER	equ	$1C73		;.b lastdriveのドライブ番号(0=A:)
+DOS_DRIVES_MAX_1	equ	$1C74		;.b ドライブ管理テーブルの個数-1[$19]
+DOS_LAST_DRIVE		equ	$1C75		;.b 組み込まれた最後のドライブの内部ドライブ番号(0=A:)
+DOS_SHARE_FILES		equ	$1C76		;.w shareのファイル数
+DOS_SHARE_LOCKS		equ	$1C78		;.w shareのロック数
+DOS_SHARE_SIZE		equ	$1C7A		;.l share管理領域の1個のサイズ(ロック数*12+92)
+DOS_TO_INNER_DRIVE	equ	$1C7E		;.b[26] ドライブ番号→内部ドライブ番号変換テーブル
+DOS_ACTIVE_FCB		equ	$1C98		;.l DOSコールに入ってからオープンしたFCBテーブル
+DOS_ACTIVE_HANDLER	equ	$1C9C		;.l DOSコールに入ってからオープンしたハンドラ番号
+DOS_EXEC_STATUS		equ	$1CA0		;.b _EXECの状態(-1=アロケート中,-2=ファイルロード中,-3=プロセス管理テーブル設定中)
+DOS_EXEC_MODULE		equ	$1CA1		;.b _EXECで起動するモジュール番号
+DOS_CON_INS_MODE	equ	$1CA2		;.b CONのINSモード(0=上書き,-1=挿入)
+DOS_DEVICE_ERROR_FLAG	equ	$1CA3		;.b デバイスエラー表示中フラグ(0=表示中,-1=表示中ではない)
+DOS_STDIN_POINTER	equ	$1CA4		;.l 標準入力バッファの読み出し位置
+DOS_STDIN_REMAINING	equ	$1CA8		;.w 標準入力バッファの残りバイト数
+DOS_EXEC_MEMORY		equ	$1CAA		;.l _EXECで起動するプロセスのメモリ管理テーブル
+DOS_EXIT_CODE		equ	$1CAE		;.l _EXIT,_KEEPPR,_EXIT2の終了コード(上位ワードは0=非常駐,1=常駐)
+DOS_EXEC_FILE_NAME	equ	$1CB2		;.l _EXECで起動するファイル名
+DOS_CLOCK_DEVICE	equ	$1CB6		;.l CLOCKデバイスヘッダ
+DOS_FFLUSH_MODE		equ	$1CBA		;.b fflushのモード(0=off,1=on)
+DOS_CTRL_C_CODE		equ	$1CBC		;.w CTRL+Cのコード(通常は$0003,off=cのとき$0103)
+DOS_CTRL_N_CODE		equ	$1CBE		;.w CTRL+Nのコード(通常は$000E,off=nのとき$010E)
+DOS_CTRL_P_CODE		equ	$1CC0		;.w CTRL+Pのコード(通常は$0010,off=pのとき$0110)
+DOS_CTRL_Q_CODE		equ	$1CC2		;.w CTRL+Qのコード(通常は$0011,off=qのとき$0111)
+DOS_CTRL_S_CODE		equ	$1CC4		;.w CTRL+Sのコード(通常は$0013,off=sのとき$0113)
+
+  .endif  ;__doswork_equ__
+	.list

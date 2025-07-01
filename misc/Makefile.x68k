@@ -1,0 +1,253 @@
+#========================================================================================
+#  Makefile.x68k
+#  Copyright (C) 2003-2024 Makoto Kamada
+#
+#  This file is part of the XEiJ (X68000 Emulator in Java).
+#  You can use, modify and redistribute the XEiJ if the conditions are met.
+#  Read the XEiJ License for more details.
+#  https://stdkmd.net/xeij/
+#========================================================================================
+
+
+#  COMMAND.X
+#    http://retropc.net/x68000/software/sharp/human302/
+SHELL = command
+RM = del
+
+#  HAS060.X
+#    http://retropc.net/x68000/software/develop/as/has060/
+#    NOTE: Use HAS060.X version 3.09+89 or later.
+AS = has060
+
+#  LK.X,CV.X,MAKE.X
+#    http://retropc.net/x68000/software/sharp/xc21/
+#    NOTE: Do not use HLK evolution version 3.01+14 that generates a broken executable file.
+LK = lk
+CV = cv
+
+#  LZX.X
+#    http://retropc.net/x68000/software/tools/archiver/italzx/
+#    NOTE: ITA lzx is critically dependent on a FAT file system. You have to remove the object file before overwriting.
+LZX = lzx
+
+
+all: 38400bps.x 51200bps.x \
+	adotr1.r adotr2.r adotr3.r \
+	cir.x \
+	crtcmmtest.x \
+	crtmod16.x \
+	crtmodtest.x \
+	crtmrb16.x \
+	cylindertest.x \
+	flinebuserror.x \
+	flineprivilege.x \
+	fputest.x \
+	hu260pat.x \
+	hypotrochoid.x \
+	instructiontest.x \
+	isHFS.x \
+	isXEiJ.x \
+	omusubifont.r \
+	optime.x \
+	pat4096test.x \
+	ppcon.x \
+	prwbit2.x \
+	r00bit0test.x \
+	rom16pat.x \
+	scsi16ex.r scsi16in.r \
+	set232c.x \
+	smktest.x \
+	spr1016test.x \
+	spr256test.x \
+	spr768x512.x \
+	sprdrv.x \
+	stupsnd.dat \
+	stupsnd.x \
+	vcntest.x \
+	vcntest2.x \
+	vperiod.x \
+	zkeytest.x
+
+
+38400bps.x: 38400bps.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+51200bps.x: 51200bps.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+adotr1.r: adotr.s
+	$(AS) -SSTEP=1 -f0,1,200 -i include -o a.o -p adotr1.prn -w $<
+	$(LK) /o a.x /x a.o
+	$(CV) /rn a.x $@
+
+adotr2.r: adotr.s
+	$(AS) -SSTEP=2 -i include -o a.o -w $<
+	$(LK) /o a.x /x a.o
+	$(CV) /rn a.x $@
+
+adotr3.r: adotr.s
+	$(AS) -SSTEP=3 -i include -o a.o -w $<
+	$(LK) /o a.x /x a.o
+	$(CV) /rn a.x $@
+
+cir.x: cir.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+crtcmmtest.x: crtcmmtest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+crtmod16.x: crtmod16.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+crtmodtest.x: crtmodtest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+crtmrb16.x: crtmod16.s
+	$(AS) -i include -o a.o -w $< -SCRTMOD_REPRODUCE_BUG
+	$(LK) -o $@ a.o
+
+cylindertest.x: cylindertest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+flinebuserror.x: flinebuserror.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+flineprivilege.x: flineprivilege.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+#  fputest.x
+#    Step 1: Run 'make -f Makefile.host fputest.s' on the host computer.
+#    Step 2: Run 'make -f Makefile.x68k fputest.x' on X68030.
+#    Step 3: Run 'fputest.x all' on X68030.
+
+fputest.x: fputest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -m 10000 -o $@ a.o
+
+hu260pat.x: hu260pat.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -b 1447a -o $@ -x a.o
+
+hypotrochoid.x: hypotrochoid.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+instructiontest.x: instructiontest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o a.x a.o
+	-$(RM) $@
+	$(LZX) -o $@ a.x
+
+isHFS.x: isHFS.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+isXEiJ.x: isXEiJ.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+omusubifont.r: omusubifont.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o a.x a.o
+	$(CV) /rn a.x $@
+
+optime.x: optime.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+pat4096test.x: pat4096test.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+ppcon.x: ppcon.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+prwbit2.x: prwbit2.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+r00bit0test.x: r00bit0test.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+rom16pat.x: rom16pat.s
+	$(AS) -f0,1,200 -i include -o a.o -p rom16pat.prn -w $<
+	$(LK) -b fea000 -o $@ -x a.o
+
+scsi16ex.r: scsi16.s
+	$(AS) -SSCSI_BIOS_LEVEL=16 -SSCSIEXROM=1 -f0,1,200 -i include -o a.o -p scsi16ex.prn -w $<
+	$(LK) -b ea0000 -o a.x -x a.o
+	$(CV) /rn a.x $@
+
+scsi16in.r: scsi16.s
+	$(AS) -SSCSI_BIOS_LEVEL=16 -SSCSIEXROM=0 -f0,1,200 -i include -o a.o -p scsi16in.prn -w $<
+	$(LK) -b fc0000 -o a.x -x a.o
+	$(CV) /rn a.x $@
+
+scsisuper.r: scsi16.s
+	$(AS) -SSCSI_BIOS_LEVEL=0 -SSCSIEXROM=0 -f0,1,200 -i include -o a.o -p scsisuper.prn -w $<
+	$(LK) -b fc0000 -o a.x -x a.o
+	$(CV) /rn a.x $@
+
+scsixvi.r: scsi16.s
+	$(AS) -SSCSI_BIOS_LEVEL=3 -SSCSIEXROM=0 -f0,1,200 -i include -o a.o -p scsixvi.prn -w $<
+	$(LK) -b fc0000 -o a.x -x a.o
+	$(CV) /rn a.x $@
+
+set232c.x: set232c.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+smktest.x: smktest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+spr1016test.x: spr1016test.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+spr256test.x: spr256test.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+spr768x512.x: spr768x512.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+sprdrv.x: sprdrv.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+stupsnd.dat: stupsnd.x
+	stupsnd o5c,5,10000,58,15,2,0,220,0,0,0,0,3,0,28,4,0,5,1,37,2,1,7,0,0,22,9,1,2,1,47,2,12,0,0,0,29,4,3,6,1,37,1,3,3,0,0,15,7,0,5,10,0,2,1,0,0,1 save
+# Acoustic Piano
+
+stupsnd.x: stupsnd.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+vcntest.x: vcntest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+vcntest2.x: vcntest2.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+vperiod.x: vperiod.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o
+
+zkeytest.x: zkeytest.s
+	$(AS) -i include -o a.o -w $<
+	$(LK) -o $@ a.o

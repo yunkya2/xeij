@@ -1,0 +1,176 @@
+	.nlist
+  .ifndef __fefunc_mac__
+__fefunc_mac__	equ	1
+
+;----------------------------------------------------------------
+;
+;	FEファンクションコール
+;
+;----------------------------------------------------------------
+
+__LMUL		equ	$FE00		;32bit符号あり整数乗算
+__LDIV		equ	$FE01		;32bit符号あり整数除算
+__LMOD		equ	$FE02		;32bit符号あり整数剰余算
+
+__UMUL		equ	$FE04		;32bit符号なし整数乗算
+__UDIV		equ	$FE05		;32bit符号なし整数除算
+__UMOD		equ	$FE06		;32bit符号なし整数剰余算
+
+__IMUL		equ	$FE08		;32bit符号なし整数乗算
+__IDIV		equ	$FE09		;32bit符号なし整数除算・剰余算
+
+__RANDOMIZE	equ	$FE0C		;rnd()乱数列の初期化
+__SRAND		equ	$FE0D		;rand()乱数列の初期化
+__RAND		equ	$FE0E		;整数乱数
+
+__STOL		equ	$FE10		;10進数の文字列を32bit符号あり整数に変換する
+__LTOS		equ	$FE11		;32bit符号あり整数を10進数の文字列に変換する
+__STOH		equ	$FE12		;16進数の文字列を32bit符号なし整数に変換する
+__HTOS		equ	$FE13		;32bit符号なし整数を16進数の文字列に変換する
+__STOO		equ	$FE14		;8進数の文字列を32bit符号なし整数に変換する
+__OTOS		equ	$FE15		;32bit符号なし整数を8進数の文字列に変換する
+__STOB		equ	$FE16		;2進数の文字列を32bit符号なし整数に変換する
+__BTOS		equ	$FE17		;32bit符号なし整数を2進数の文字列に変換する
+__IUSING	equ	$FE18		;32bit符号あり整数を文字数を指定して右詰めで10進数の文字列に変換する
+
+__LTOD		equ	$FE1A		;32bit符号あり整数を64bit浮動小数点数に変換する
+__DTOL		equ	$FE1B		;64bit浮動小数点数を32bit符号あり整数に変換する
+__LTOF		equ	$FE1C		;32bit符号あり整数を32bit浮動小数点数に変換する
+__FTOL		equ	$FE1D		;32bit浮動小数点数を32bit符号あり整数に変換する
+__FTOD		equ	$FE1E		;32bit浮動小数点数を64bit浮動小数点数に変換する
+__DTOF		equ	$FE1F		;64bit浮動小数点数を32bit浮動小数点数に変換する
+__VAL		equ	$FE20		;文字列を64bit浮動小数点数に変換する
+__USING		equ	$FE21		;64bit浮動小数点数をアトリビュートを指定して文字列に変換する
+__STOD		equ	$FE22		;文字列を64bit浮動小数点数に変換する
+__DTOS		equ	$FE23		;64bit浮動小数点数を文字列に変換する
+__ECVT		equ	$FE24		;64bit浮動小数点数を全体の桁数を指定して文字列に変換する
+__FCVT		equ	$FE25		;64bit浮動小数点数を小数点以下の桁数を指定して文字列に変換する
+__GCVT		equ	$FE26		;64bit浮動小数点数を全体の桁数を指定して文字列に変換する
+
+__DTST		equ	$FE28		;64bit浮動小数点数と0の比較
+__DCMP		equ	$FE29		;64bit浮動小数点数の比較
+__DNEG		equ	$FE2A		;64bit浮動小数点数の符号反転
+__DADD		equ	$FE2B		;64bit浮動小数点数の加算
+__DSUB		equ	$FE2C		;64bit浮動小数点数の減算
+__DMUL		equ	$FE2D		;64bit浮動小数点数の乗算
+__DDIV		equ	$FE2E		;64bit浮動小数点数の除算
+__DMOD		equ	$FE2F		;64bit浮動小数点数の剰余算
+__DABS		equ	$FE30		;64bit浮動小数点数の絶対値
+__DCEIL		equ	$FE31		;64bit浮動小数点数の天井関数(引数を下回らない最小の整数)
+__DFIX		equ	$FE32		;64bit浮動小数点数の切り落とし関数(絶対値について引数を上回らない最大の整数)
+__DFLOOR	equ	$FE33		;64bit浮動小数点数の床関数(引数を上回らない最大の整数)
+__DFRAC		equ	$FE34		;64bit浮動小数点数の幹小数部
+__DSGN		equ	$FE35		;64bit浮動小数点数の符号
+__SIN		equ	$FE36		;64bit浮動小数点数の正弦
+__COS		equ	$FE37		;64bit浮動小数点数の余弦
+__TAN		equ	$FE38		;64bit浮動小数点数の正接
+__ATAN		equ	$FE39		;64bit浮動小数点数の逆正接
+__LOG		equ	$FE3A		;64bit浮動小数点数の自然対数
+__EXP		equ	$FE3B		;64bit浮動小数点数の指数関数
+__SQR		equ	$FE3C		;64bit浮動小数点数の平方根
+__PI		equ	$FE3D		;64bit浮動小数点数の円周率
+__NPI		equ	$FE3E		;64bit浮動小数点数の円周率倍
+__POWER		equ	$FE3F		;64bit浮動小数点数の累乗
+__RND		equ	$FE40		;64bit浮動小数点数の乱数
+__SINH		equ	$FE41		;64bit浮動小数点数の双曲線正弦
+__COSH		equ	$FE42		;64bit浮動小数点数の双曲線余弦
+__TANH		equ	$FE43		;64bit浮動小数点数の双曲線正接
+__ATANH		equ	$FE44		;64bit浮動小数点数の逆双曲線正接
+__ASIN		equ	$FE45		;64bit浮動小数点数の逆正弦
+__ACOS		equ	$FE46		;64bit浮動小数点数の逆余弦
+__LOG10		equ	$FE47		;64bit浮動小数点数の常用対数
+__LOG2		equ	$FE48		;64bit浮動小数点数の二進対数
+__DFREXP	equ	$FE49		;64bit浮動小数点数の分解
+__DLDEXP	equ	$FE4A		;64bit浮動小数点数の合成
+__DADDONE	equ	$FE4B		;64bit浮動小数点数に1を加える
+__DSUBONE	equ	$FE4C		;64bit浮動小数点数から1を引く
+__DDIVTWO	equ	$FE4D		;64bit浮動小数点数を2で割る
+__DIEECNV	equ	$FE4E		;64bit浮動小数点数をIEEEフォーマットに変換する(FLOAT1.X以外は何もしない)
+__IEEDCNV	equ	$FE4F		;64bit浮動小数点数をIEEEフォーマットから変換する(FLOAT1.X以外は何もしない)
+__FVAL		equ	$FE50		;文字列を32bit浮動小数点数に変換する
+__FUSING	equ	$FE51		;32bit浮動小数点数をアトリビュートを指定して文字列に変換する
+__STOF		equ	$FE52		;文字列を32bit浮動小数点数に変換する
+__FTOS		equ	$FE53		;32bit浮動小数点数を文字列に変換する
+__FECVT		equ	$FE54		;32bit浮動小数点数を全体の桁数を指定して文字列に変換する
+__FFCVT		equ	$FE55		;32bit浮動小数点数を小数点以下の桁数を指定して文字列に変換する
+__FGCVT		equ	$FE56		;32bit浮動小数点数を全体の桁数を指定して文字列に変換する
+
+__FTST		equ	$FE58		;32bit浮動小数点数と0の比較
+__FCMP		equ	$FE59		;32bit浮動小数点数の比較
+__FNEG		equ	$FE5A		;32bit浮動小数点数の符号反転
+__FADD		equ	$FE5B		;32bit浮動小数点数の加算
+__FSUB		equ	$FE5C		;32bit浮動小数点数の減算
+__FMUL		equ	$FE5D		;32bit浮動小数点数の乗算
+__FDIV		equ	$FE5E		;32bit浮動小数点数の除算
+__FMOD		equ	$FE5F		;32bit浮動小数点数の剰余算
+__FABS		equ	$FE60		;32bit浮動小数点数の絶対値
+__FCEIL		equ	$FE61		;32bit浮動小数点数の天井関数(引数を下回らない最小の整数)
+__FFIX		equ	$FE62		;32bit浮動小数点数の切り落とし関数(絶対値について引数を上回らない最大の整数)
+__FFLOOR	equ	$FE63		;32bit浮動小数点数の床関数(引数を上回らない最大の整数)
+__FFRAC		equ	$FE64		;32bit浮動小数点数の幹小数部
+__FSGN		equ	$FE65		;32bit浮動小数点数の符号
+__FSIN		equ	$FE66		;32bit浮動小数点数の正弦
+__FCOS		equ	$FE67		;32bit浮動小数点数の余弦
+__FTAN		equ	$FE68		;32bit浮動小数点数の正接
+__FATAN		equ	$FE69		;32bit浮動小数点数の逆正接
+__FLOG		equ	$FE6A		;32bit浮動小数点数の自然対数
+__FEXP		equ	$FE6B		;32bit浮動小数点数の指数関数
+__FSQR		equ	$FE6C		;32bit浮動小数点数の平方根
+__FPI		equ	$FE6D		;32bit浮動小数点数の円周率
+__FNPI		equ	$FE6E		;32bit浮動小数点数の円周率倍
+__FPOWER	equ	$FE6F		;32bit浮動小数点数の累乗
+__FRND		equ	$FE70		;32bit浮動小数点数の乱数
+__FSINH		equ	$FE71		;32bit浮動小数点数の双曲線正弦
+__FCOSH		equ	$FE72		;32bit浮動小数点数の双曲線余弦
+__FTANH		equ	$FE73		;32bit浮動小数点数の双曲線正接
+__FATANH	equ	$FE74		;32bit浮動小数点数の逆双曲線正接
+__FASIN		equ	$FE75		;32bit浮動小数点数の逆正弦
+__FACOS		equ	$FE76		;32bit浮動小数点数の逆余弦
+__FLOG10	equ	$FE77		;32bit浮動小数点数の常用対数
+__FLOG2		equ	$FE78		;32bit浮動小数点数の二進対数
+__FFREXP	equ	$FE79		;32bit浮動小数点数の分解
+__FLDEXP	equ	$FE7A		;32bit浮動小数点数の合成
+__FADDONE	equ	$FE7B		;32bit浮動小数点数に1を加える
+__FSUBONE	equ	$FE7C		;32bit浮動小数点数から1を引く
+__FDIVTWO	equ	$FE7D		;32bit浮動小数点数を2で割る
+__FIEECNV	equ	$FE7E		;32bit浮動小数点数をIEEEフォーマットに変換する(FLOAT1.X以外は何もしない)
+__IEEFCNV	equ	$FE7F		;32bit浮動小数点数をIEEEフォーマットから変換する(FLOAT1.X以外は何もしない)
+__CLMUL		equ	$FEE0		;32bit符号あり整数乗算(スタックエリアを使う)
+__CLDIV		equ	$FEE1		;32bit符号あり整数除算(スタックエリアを使う)
+__CLMOD		equ	$FEE2		;32bit符号あり整数剰余算(スタックエリアを使う)
+__CUMUL		equ	$FEE3		;32bit符号なし整数乗算(スタックエリアを使う)
+__CUDIV		equ	$FEE4		;32bit符号なし整数除算(スタックエリアを使う)
+__CUMOD		equ	$FEE5		;32bit符号なし整数剰余算(スタックエリアを使う)
+__CLTOD		equ	$FEE6		;32bit符号あり整数を64bit浮動小数点数に変換する(スタックエリアを使う)
+__CDTOL		equ	$FEE7		;64bit浮動小数点数を32bit符号あり整数に変換する(スタックエリアを使う)
+__CLTOF		equ	$FEE8		;32bit符号あり整数を32bit浮動小数点数に変換する(スタックエリアを使う)
+__CFTOL		equ	$FEE9		;32bit浮動小数点数を32bit符号あり整数に変換する(スタックエリアを使う)
+__CFTOD		equ	$FEEA		;32bit浮動小数点数を64bit浮動小数点数に変換する(スタックエリアを使う)
+__CDTOF		equ	$FEEB		;64bit浮動小数点数を32bit浮動小数点数に変換する(スタックエリアを使う)
+__CDCMP		equ	$FEEC		;64bit浮動小数点数の比較(スタックエリアを使う)
+__CDADD		equ	$FEED		;64bit浮動小数点数の加算(スタックエリアを使う)
+__CDSUB		equ	$FEEE		;64bit浮動小数点数の減算(スタックエリアを使う)
+__CDMUL		equ	$FEEF		;64bit浮動小数点数の乗算(スタックエリアを使う)
+__CDDIV		equ	$FEF0		;64bit浮動小数点数の除算(スタックエリアを使う)
+__CDMOD		equ	$FEF1		;64bit浮動小数点数の剰余算(スタックエリアを使う)
+__CFCMP		equ	$FEF2		;32bit浮動小数点数の比較(スタックエリアを使う)
+__CFADD		equ	$FEF3		;32bit浮動小数点数の加算(スタックエリアを使う)
+__CFSUB		equ	$FEF4		;32bit浮動小数点数の減算(スタックエリアを使う)
+__CFMUL		equ	$FEF5		;32bit浮動小数点数の乗算(スタックエリアを使う)
+__CFDIV		equ	$FEF6		;32bit浮動小数点数の除算(スタックエリアを使う)
+__CFMOD		equ	$FEF7		;32bit浮動小数点数の剰余算(スタックエリアを使う)
+__CDTST		equ	$FEF8		;64bit浮動小数点数と0の比較(スタックエリアを使う)
+__CFTST		equ	$FEF9		;32bit浮動小数点数と0の比較(スタックエリアを使う)
+__CDINC		equ	$FEFA		;64bit浮動小数点数に1を加える(スタックエリアを使う)
+__CFINC		equ	$FEFB		;32bit浮動小数点数に1を加える(スタックエリアを使う)
+__CDDEC		equ	$FEFC		;64bit浮動小数点数から1を引く(スタックエリアを使う)
+__CFDEC		equ	$FEFD		;32bit浮動小数点数から1を引く(スタックエリアを使う)
+__FEVARG	equ	$FEFE		;バージョン確認
+__FEVECS	equ	$FEFF		;ベクタ設定
+
+FPACK	.macro	num
+	.dc.w	num
+	.endm
+
+  .endif  ;__fefunc_mac__
+	.list

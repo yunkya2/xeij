@@ -1,0 +1,40 @@
+	.nlist
+  .ifndef __ioi_equ__
+__ioi_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	I/O割り込み
+;
+;----------------------------------------------------------------
+
+;I/O割り込みステータス
+;	FDC_REQ|FDD_REQ|PRN_READY|HDC_REQ|HDC_INTEN|FDC_INTEN|FDD_INTEN|PRN_INTEN
+IOI_STATUS		equ	$00E9C001	;I/O割り込みステータス
+IOI_FDC_REQ_BIT		equ	 7
+IOI_FDC_REQ_MASK	equ	%10000000	;1=FDC割り込み要求あり
+IOI_FDD_REQ_BIT		equ	  6
+IOI_FDD_REQ_MASK	equ	%01000000	;1=FDD割り込み要求あり。メディア挿入、メディア排出
+IOI_PRN_READY_BIT	equ	   5
+IOI_PRN_READY_MASK	equ	%00100000	;0=プリンタオフラインまたはプリンタビジー,1=プリンタオンラインかつプリンタレディ
+IOI_HDC_REQ_BIT		equ	    4
+IOI_HDC_REQ_MASK	equ	%00010000	;1=HDC割り込み要求あり
+IOI_HDC_INTEN_BIT	equ	     3
+IOI_HDC_INTEN_MASK	equ	%00001000	;1=HDC割り込み許可
+IOI_FDC_INTEN_BIT	equ	      2
+IOI_FDC_INTEN_MASK	equ	%00000100	;1=FDC割り込み許可
+IOI_FDD_INTEN_BIT	equ	       1
+IOI_FDD_INTEN_MASK	equ	%00000010	;1=FDD割り込み許可
+IOI_PRN_INTEN_BIT	equ	        0
+IOI_PRN_INTEN_MASK	equ	%00000001	;1=プリンタ割り込み許可
+
+;I/O割り込みベクタ番号
+;	VECTOR######|--
+IOI_VECTOR		equ	$00E9C003	;I/O割り込みベクタ番号。下位2bitは固定
+IOI_FDC_NUMBER		equ	$00		;FDC割り込みベクタ番号の下位2bit
+IOI_FDD_NUMBER		equ	$01		;FDD割り込みベクタ番号の下位2bit
+IOI_HDC_NUMBER		equ	$02		;HDC割り込みベクタ番号の下位2bit
+IOI_PRN_NUMBER		equ	$03		;プリンタ割り込みベクタ番号の下位2bit
+
+  .endif  ;__ioi_equ__
+	.list

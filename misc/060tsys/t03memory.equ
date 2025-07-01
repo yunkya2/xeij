@@ -1,0 +1,123 @@
+
+;----------------------------------------------------------------
+;
+;	サブスレッドの初期プログラムのマクロ
+;
+;----------------------------------------------------------------
+kernelCodeMacro	.macro	expand
+	.local	base,abort,kill
+base:
+	.if	expand
+	lea.l	base-sProgram(pc),a6
+	.else
+	.ds.w	2
+	.endif
+
+;プロセス管理テーブルを作る
+	pea.l	16(a6)			;プロセス管理を移す
+	DOS	_PSPSET
+	addq.l	#4,sp
+	clr.b	pPath(a6)		;パスをクリア
+	lea.l	sFlag(a6),a0
+	lea.l	pName(a6),a1		;ファイル名に識別フラグを設定
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	move.l	(a0)+,(a1)+
+	clr.b	(a1)
+	move.l	sEnvStart(a6),pEnvPtr(a6)
+
+	st.b	sProcessMove(a6)
+	DOS	_CHANGE_PR
+
+;アボートベクタを設定する
+	.if	expand
+	pea.l	abort(pc)
+	.else
+	.ds.w	2
+	.endif
+	move.w	#_CTRLVC,-(sp)
+	DOS	_INTVCS
+	addq.l	#6,sp
+
+;プログラムを起動する
+	clr.l	-(sp)
+	pea.l	sCommandLine(a6)
+	pea.l	sFileName(a6)
+	clr.w	-(sp)
+	DOS	_EXEC
+	lea.l	14(sp),sp
+
+abort:
+	.if	expand
+	lea.l	base-sProgram(pc),a6
+	.else
+	.ds.w	2
+	.endif
+	movea.l	sUspEnd(a6),sp
+
+;スレッドを削除する
+kill:
+	DOS	_CHANGE_PR
+	move.l	a6,-(sp)
+	DOS	_S_MFREE
+	addq.l	#4,sp
+	.if	expand
+	bra.s	kill
+	.else
+	.ds.w	1
+	.endif
+	.endm
+
+;----------------------------------------------------------------
+;
+;	定数
+;
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;サブスレッドのメモリ空間の先頭のブロックの構造
+;	オフセットはメモリ空間の先頭を0とする
+	.offset	0
+		.ds.b	pSize		;メモリ管理テーブルとプロセス管理テーブル
+sFlag:		.ds.b	16		;識別フラグ(固定文字列)
+
+sExclusive:	.ds.b	xSize		;排他制御情報
+sDriveTable:	.ds.b	dSize*26	;ドライブ管理テーブル
+
+sThreadId:	.ds.w	1		;スレッド番号
+sThreadName:	.ds.b	16		;スレッド名
+
+sFileName:	.ds.b	256		;最初に実行するファイル名
+sCommandLine:	.ds.b	256		;      〃      コマンドライン
+
+sBuffer:				;スレッド間通信バッファ
+sBufferSize:	.ds.l	1		;      〃      バッファのサイズ
+sBufferStart:	.ds.l	1		;      〃      バッファの先頭
+sBufferCommand:	.ds.w	1		;      〃      コマンド
+sBufferYourId:	.ds.w	1		;      〃      相手のスレッド番号
+sBufferAreaSize	equ	16		;      〃      バッファ領域のサイズ
+sBufferArea:	.ds.b	sBufferAreaSize	;      〃      バッファ
+
+sSspStart:	.ds.l	1		;ssp領域の先頭
+sSspEnd:	.ds.l	1		;ssp領域の末尾+1
+sUspStart:	.ds.l	1		;usp領域の先頭
+sUspEnd:	.ds.l	1		;usp領域の末尾+1
+sEnvStart:	.ds.l	1		;環境の領域の先頭
+sEnvEnd:	.ds.l	1		;環境の領域の末尾+1
+
+sProcessMove:	.ds.b	1		;プロセス管理テーブルが移動したら-1になる
+		.even
+
+sProgram:	kernelCodeMacro	0	;初期プログラム
+
+sSize:
+;この後にssp領域,usp領域,環境の領域が続く
+	.text
+
+;----------------------------------------------------------------
+;スレッドフラグ
+threadFlag0	equ	'060t'
+threadFlag1	equ	'urbo'
+threadFlag2	equ	'   v'
+threadFlag3	equ	'0.00'

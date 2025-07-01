@@ -1,0 +1,333 @@
+	.nlist
+  .ifndef __bioswork_equ__
+__bioswork_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	BIOSワークエリア
+;
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;	凡例
+;		|	bitの区切り
+;		||	バイトの区切り
+;		-	不定または重要でないbit
+;		0	常に0のbit
+;		1	常に1のbit
+;		*	不定または重要でないバイト
+;		$00	常に$00のバイト
+;		$FF	常に$FFのバイト
+;		A	0=Aでない,1=Aである
+;		A##	2bitのA
+;		A###	3bitのA
+;			以下同様
+;		A/B	0=A,1=B
+;		A/B/C/D	00=A,01=B,10=C,11=D
+;			以下同様
+;----------------------------------------------------------------
+
+BIOS_BITSNS		equ	$0800		;.b[16] 押されているキー
+;				$0800		;.b 押されているキー。6&|5%|4$|3#|2"|1!|ESC|-
+;				$0801		;.b 押されているキー。BS|\||^~|-=|0|9)|8(|7'
+;				$0802		;.b 押されているキー。U|Y|T|R|E|W|Q|TAB
+;				$0803		;.b 押されているキー。S|A|CR|[{|@`|P|O|I
+;				$0804		;.b 押されているキー。;+|L|K|J|H|G|F|D
+;				$0805		;.b 押されているキー。N|B|V|C|X|Z|]}|:*
+;				$0806		;.b 押されているキー。DEL|HOME|SP|_|/?|.>|,<|M
+;				$0807		;.b 押されているキー。CLR|↓|→|↑|←|UNDO|ROLL DOWN|ROLL UP
+;				$0808		;.b 押されているキー。4|+|9|8|7|-|*|/
+;				$0809		;.b 押されているキー。0|ENTER|3|2|1|=|6|5
+;				$080A		;.b 押されているキー。XF3|XF2|XF1|HELP|登録|記号|.|,
+;				$080B		;.b 押されているキー。ひら|INS|CAPS|コード|ローマ|かな|XF5|XF4
+;				$080C		;.b 押されているキー。F5|F4|F3|F2|F1|COPY|BREAK|全角
+;				$080D		;.b 押されているキー。---|F10|F9|F8|F7|F6
+;				$080E		;.b 押されているキー。---|NUM|OPT.2|OPT.1|CTRL|SHIFT
+;				$080F		;.b 押されているキー。--------
+BIOS_SFTSNS		equ	$0810		;.b LEDが点灯しているキー。-|全角|ひら|INS|CAPS|コード|ローマ|かな
+;				$0811		;.b LEDが点灯または押されているキー。CAPS|コード|ローマ|かな|OPT.2|OPT.1|CTRL|SHIFT
+BIOS_KEY_REMAINING	equ	$0812		;.w キー入力バッファ内のデータ数
+BIOS_KEY_WRITTEN	equ	$0814		;.l キー入力バッファに最後に書き込んだデータのアドレス
+BIOS_KEY_READ		equ	$0818		;.l キー入力バッファから最後に読み込んだデータのアドレス
+BIOS_KEY_BUFFER		equ	$081C		;.w[64] キー入力バッファ
+BIOS_RSR_REMAINING	equ	$089C		;.w RS-232C受信バッファ内のデータ数
+BIOS_RSR_WRITTEN	equ	$089E		;.l RS-232C受信バッファに最後に書き込んだデータのアドレス
+BIOS_RSR_READ		equ	$08A2		;.l RS-232C受信バッファから最後に読み込んだデータのアドレス
+BIOS_RSR_BUFFER		equ	$08A6		;.w[64] RS-232C受信バッファの先頭
+BIOS_AUX_MODE		equ	$0926		;.w AUXモード
+;				$0926		;.b AUXモード。S##(2/1/1.5/2)|P##(N/O/N/E)|L##(5/6/7/8)|XON|SISO
+;				$0927		;.b AUXモード。CTSRTS|---|B####(75/150/300/600/1200/2400/4800/9600/19200)
+BIOS_AUX_SISO		equ	$0928		;.b AUX SISOの状態。------|SIout|SIinp
+BIOS_AUX_XON		equ	$0929		;.b AUX XONOFFの状態。-----|XONout|XONinp
+BIOS_MOUSE_COUNTER	equ	$092A		;.w マウス受信カウンタ。3→1
+BIOS_MOUSE_POINTER	equ	$092C		;.l マウス受信ポインタ
+BIOS_MOUSE_BUFFER	equ	$0930		;.b[3] マウス受信バッファ
+BIOS_MOUSE_RAW_STATUS	equ	$0930		;.b マウス受信ステータス。Y<-128|Y>127|X<-128|X>128|--|Ron|Lon
+BIOS_MOUSE_RAW_DX	equ	$0931		;.b マウス受信X方向移動量。-128～127
+BIOS_MOUSE_RAW_DY	equ	$0932		;.b マウス受信Y方向移動量。-128～127
+BIOS_MSCTRL		equ	$0933		;.b 現在のMSCTRL端子の状態
+BIOS_SOFTKEY_HANDLE	equ	$0934		;.l マウス受信データ処理アドレス(ソフトキーボード)
+BIOS_MOUSE_HANDLE	equ	$0938		;.l マウス受信データ処理アドレス(マウスカーソル)
+BIOS_CRTMOD		equ	$093C		;.b 画面モード。0～19
+BIOS_GRAPHIC_PAGES	equ	$093D		;.b グラフィック画面のページ数。1,2,4
+BIOS_TEXT_Y_OFFSET	equ	$093E		;.l テキストVRAMのY方向のオフセット。128
+BIOS_TCOLOR		equ	$0942		;.w テキスト表示プレーンセレクト。0～15
+BIOS_TEXT_PLANE		equ	$0944		;.l テキスト表示プレーン左上アドレス。$00E00000,$00E20000,$00E40000,$00E60000
+BIOS_CONSOLE_OFFSET	equ	$0948		;.l コンソールの左上のアドレスのオフセット
+BIOS_TX_PLANE		equ	$094C		;.l テキスト表示プレーン先頭アドレス(_TX～で使用)
+BIOS_TX_X0		equ	$0950		;.w テキスト表示X座標オフセット(_TX～で使用)
+BIOS_TX_Y0		equ	$0952		;.w テキスト表示Y座標オフセット(_TX～で使用)
+BIOS_TEXT_LEFT		equ	$0954		;.w テキストクリッピングエリア(X最小値)
+BIOS_TEXT_TOP		equ	$0956		;.w テキストクリッピングエリア(Y最小値)
+BIOS_TEXT_RIGHT		equ	$0958		;.w テキストクリッピングエリア(X最大値+1)
+BIOS_TEXT_BOTTOM	equ	$095A		;.w テキストクリッピングエリア(Y最大値+1)
+BIOS_GRAPHIC_PAGE	equ	$095C		;.l グラフィック描画ページ先頭アドレス(_SET_PAGEで設定)
+BIOS_GRAPHIC_Y_OFFSET	equ	$0960		;.l グラフィックVRAMのY方向のオフセット
+BIOS_GRAPHIC_PALETS	equ	$0964		;.w グラフィック画面の色数-1。0=グラフィック画面使用不可
+BIOS_PEN_COLOR		equ	$0966		;.w グラフィックペンカラー(_PENCOLORで設定)
+BIOS_GRAPHIC_LEFT	equ	$0968		;.w グラフィッククリッピングエリア左端
+BIOS_GRAPHIC_TOP	equ	$096A		;.w グラフィッククリッピングエリア上端
+BIOS_GRAPHIC_RIGHT	equ	$096C		;.w グラフィッククリッピングエリア右端
+BIOS_GRAPHIC_BOTTOM	equ	$096E		;.w グラフィッククリッピングエリア下端
+BIOS_CONSOLE_RIGHT	equ	$0970		;.w コンソールの右端の桁座標
+BIOS_CONSOLE_BOTTOM	equ	$0972		;.w コンソールの下端の行座標
+BIOS_CURSOR_COLUMN	equ	$0974		;.w カーソルの桁座標
+BIOS_CURSOR_ROW		equ	$0976		;.w カーソルの行座標
+BIOS_BEEP_DATA		equ	$0978		;.l BEEP音のADPCMデータのアドレス。-1=BIOS_BEEP_EXTENSIONを使う
+BIOS_BEEP_LENGTH	equ	$097C		;.w BEEP音のADPCMデータのバイト数。0=無音
+BIOS_ESCAPE_EXTENSION	equ	$097E		;.l 拡張ESCシーケンス処理ルーチンのアドレス
+BIOS_ESCAPE_POINTER	equ	$0982		;.l エスケープシーケンスバッファの書き込み位置
+BIOS_ESCAPE_BUFFER	equ	$0986		;.b[10] エスケープシーケンスバッファ
+BIOS_PUTC_POOL		equ	$0990		;.b _B_PUTCの1バイト目のプール。$1Bのときエスケープシーケンスの出力中
+BIOS_CURSOR_DRAWN	equ	$0991		;.b カーソルが描かれているか。0=描かれていない,-1=描かれている
+BIOS_CURSOR_ON		equ	$0992		;.b カーソルを表示しているか。0=_B_CUROFFで表示していない,-1=_B_CURONで表示している
+BIOS_CURSOR_PROHIBITED	equ	$0993		;.b カーソルの表示が禁止されているか。0=_OS_CURONで許可されている,-1=_OS_CUROFで禁止されている
+BIOS_ATTRIBUTE_1	equ	$0994		;.b 文字属性1。取り消し線|下線|斜体|細字|反転|太字|プレーン##
+BIOS_STRIKETHROUGH_BIT	equ	 7		;取り消し線
+BIOS_STRIKETHROUGH	equ	%10000000
+BIOS_UNDERLINE_BIT	equ	  6		;下線
+BIOS_UNDERLINE		equ	%01000000
+BIOS_ITALIC_BIT		equ	   5		;斜体
+BIOS_ITALIC		equ	%00100000
+BIOS_FAINT_BIT		equ	    4		;細字
+BIOS_FAINT		equ	%00010000
+BIOS_REVERSE_BIT	equ	     3		;反転
+BIOS_REVERSE		equ	%00001000
+BIOS_BOLD_BIT		equ	      2		;太字
+BIOS_BOLD		equ	%00000100
+BIOS_SAVED_ATTRIBUTE_1	equ	$0995		;.b ESC [sで保存された文字属性1
+BIOS_SAVED_COLUMN	equ	$0996		;.w ESC [sで保存されたカーソルの桁座標
+BIOS_SAVED_ROW		equ	$0998		;.w ESC [sで保存されたカーソルの行座標
+BIOS_USER_FONT_12KU_16	equ	$099A		;.l 16x16全角外字(12区～13区)のフォントアドレス
+BIOS_USER_FONT_86KU_16	equ	$099E		;.l 16x16全角外字(86区～87区)のフォントアドレス
+BIOS_USER_FONT_F4XX_16	equ	$09A2		;.l 8x16半角外字($F400～$F5FF)のフォントアドレス
+BIOS_USER_FONT_12KU_24	equ	$09A6		;.l 24x24全角外字(12区～13区)のフォントアドレス
+BIOS_USER_FONT_86KU_24	equ	$09AA		;.l 24x24全角外字(86区～87区)のフォントアドレス
+BIOS_USER_FONT_F4XX_24	equ	$09AE		;.l 12x24半角外字($F400～$F5FF)のフォントアドレス
+BIOS_TC_MOUSE_PERIOD	equ	$09B2		;.w マウスデータ受信タイマ初期値
+BIOS_TC_MOUSE_COUNTER	equ	$09B4		;.w マウスデータ受信タイマカウンタ(1/100秒ずつデクリメント)
+BIOS_TC_MOUSE_HANDLE	equ	$09B6		;.l マウスデータ受信処理アドレス
+BIOS_TC_CURSOR_PERIOD	equ	$09BA		;.w カーソル点滅タイマ初期値
+BIOS_TC_CURSOR_COUNTER	equ	$09BC		;.w カーソル点滅タイマカウンタ(1/100秒ずつデクリメント)
+BIOS_TC_CURSOR_HANDLE	equ	$09BE		;.l カーソル点滅処理アドレス
+BIOS_TC_MOTOR_PERIOD	equ	$09C2		;.w FDモータOFFタイマ初期値
+BIOS_TC_MOTOR_COUNTER	equ	$09C4		;.w FDモータOFFタイマカウンタ(1/100秒ずつデクリメント)
+BIOS_TC_MOTOR_HANDLE	equ	$09C6		;.l FDモータ停止処理アドレス
+BIOS_TC_MINUTE_PERIOD	equ	$09CA		;.w 1分タイマ初期値
+BIOS_TC_MINUTE_COUNTER	equ	$09CC		;.w 1分タイマカウンタ(1/100秒ずつデクリメント)
+BIOS_TC_MINUTE_HANDLE	equ	$09CE		;.l 1分処理アドレス
+BIOS_ALARM_SPAN		equ	$09D2		;.l 起動後OFFするまでの時間(分)
+BIOS_ALARM_MINUTE	equ	$09D6		;.l 起動後分単位でカウントアップするカウンタ
+BIOS_OPM_1B		equ	$09DA		;.b FM音源レジスタ$1B(CT,W)のワーク
+
+BIOS_GRAPHIC_USED	equ	$09DC		;.b グラフィック画面の使用状態。0=未使用,1=システム,2=ユーザ,3=破壊
+BIOS_TEXT_USED		equ	$09DD		;.b テキスト画面の使用状態。0=未使用,1=システム,2=ユーザ,3=破壊
+BIOS_ROMDB		equ	$09DE		;.b ROMデバッガを起動したか。0=OFF,1=AUX,-1=CON[16]
+BIOS_BOOT_POWER		equ	$09DF		;.b 電源情報。0=スイッチ,1=外部,2=アラーム
+BIOS_BOOT_DEVICE	equ	$09E0		;.b 起動情報。1=ROM,2=SRAM,$8x=HD,$9x=FD
+BIOS_MOTOR_ON		equ	$09E1		;.b FDDモータの状態。ON済み|OFF準備|------
+BIOS_FDD_SENSE		equ	$09E2		;.b[4] FDDの状態。点滅|排出禁止|排出禁止S|排出禁止U|プロテクト|ノットレディ|-- x4
+BIOS_FDD_INSERTED	equ	$09E6		;.b[8] FDDの状態。挿入|誤挿入|------,変化(1=なし,-1=あり) x4
+BIOS_FDC_COMMAND	equ	$09EE		;.b[10] FDCコマンドバッファ
+BIOS_SASI_COMMAND	equ	$09F8		;.b[6] SASIコマンドバッファ
+BIOS_SASI_CAPACITY	equ	$09FE		;.b[16] SASIハードディスクの容量の配列。0=未確認,10=10MB,20=20MB,40=40MB,128=非接続
+
+BIOS_IOCS_NUMBER	equ	$0A0E		;.w 実行中のIOCSコールの番号。-1=なし
+
+BIOS_LPT_ABORT		equ	$0A10		;.b 1=「プリンタがつながっていません」で中止を選択済み
+BIOS_LPT_KANJI		equ	$0A11		;.b 1=漢字モード
+BIOS_LPT_POOL		equ	$0A12		;.b プリンタに出力する文字コードの1バイト目のプール
+BIOS_LPT_ROW		equ	$0A13		;.b プリンタの行位置
+BIOS_LPT_COLUMN_WORD	equ	$0A14		;.w プリンタの桁位置(ワード)
+BIOS_LPT_COLUMN		equ	$0A15		;.b プリンタの桁位置
+BIOS_COPY_PLANE		equ	$0A16		;.l ハードコピーの先頭アドレス [$00E00000]
+BIOS_SHIFT_COPY_ROWS	equ	$0A1A		;.w (SHIFT+COPYのハードコピー範囲のY方向ドット数/24)-1 [$0029]
+;				$0A1C		;.l (プリンタ) [$00FFFF00]
+BIOS_COPY_ROWS		equ	$0A20		;.w (COPYのハードコピー範囲のY方向ドット数/24)-1 [$0014]
+;				$0A22		;.l (プリンタ) [$00FF0000]
+BIOS_COPY_WIDTH		equ	$0A26		;.w ハードコピー範囲のX方向ドット数-1 [$005F]
+BIOS_LPT_KANJI_ON	equ	$0A28		;.b[8] 漢字モードにして漢字左右スペースをそれぞれ6にする[$06,$1B,'K',$1C,'S',$06,$06,$00]
+BIOS_LPT_KANJI_OFF	equ	$0A30		;.b[4] 漢字モードの解除 [$02,$1B,'H',$00]
+;				$0A34		;.b[4] (プリンタ) [$00,$00,$00,$00]
+BIOS_LPT_CRLF		equ	$0A38		;.b[4] 改行 [$02,$0D,$0A,$00]
+BIOS_LPT_PITCH_8	equ	$0A3C		;.b[6] 改行幅を1/8インチに設定 [$04,$1B,'%','9',$0F,$00]
+BIOS_LPT_PITCH_NORMAL	equ	$0A42		;.b[6] 改行幅を元に戻す [$04,$1B,'%','9',$00,$00]
+BIOS_LPT_PITCH_12	equ	$0A48		;.b[6] 改行幅を1/12インチに設定 [$04,$1B,'%','9',$0A,$00]
+BIOS_LPT_PITCH_24	equ	$0A4E		;.b[6] 改行幅を1/24インチに設定 [$04,$1B,'%','9',$05,$00]
+BIOS_LPT_IMAGE_1536	equ	$0A54		;.b[8] 24ドットビットイメージ1536*3データ [$04,$1B,'J',$06,$00,$00,$00,$00]
+BIOS_LPT_IMAGE_768	equ	$0A5C		;.b[8] 24ドットビットイメージ768*3データ [$04,$1B,'J',$03,$00,$00,$00,$00]
+BIOS_LPT_IMAGE_18	equ	$0A64		;.b[8] 24ドットビットイメージ18*3データ [$04,$1B,'J',$00,$12,$00,$00,$00]
+BIOS_LPT_IMAGE_36	equ	$0A6C		;.b[8] 24ドットビットイメージ36*3データ [$04,$1B,'J',$00,$24,$00,$00,$00]
+BIOS_LPT_REVERSE	equ	$0A74		;.b ビットイメージの出力方向。0=ノーマル,-1=リバース [0]
+;				$0A75		;.b (プリンタ) [$03]
+;				$0A76		;.b (プリンタ) [$06]
+BIOS_LPT_IMAGE		equ	$0A77		;.b ビットイメージ出力フラグ。---|ANK|漢字1|漢字2|外字1|外字2 [$01]
+BIOS_LPT_ROWS		equ	$0A78		;.b 1ページの行数-1。-1=指定なし [-1]
+BIOS_LPT_COLUMNS	equ	$0A79		;.b 1ページの桁数-1。-1=指定なし [-1]
+BIOS_MOUSE_PLANE_3	equ	$0A7A		;.l マウスカーソル表示ページ開始アドレス(プレーン3) [$00E60000]
+BIOS_MOUSE_PLANE_2	equ	$0A7E		;.l マウスカーソル表示ページ開始アドレス(プレーン2) [$00E40000]
+BIOS_MOUSE_VDISP	equ	$0A82		;.w マウスカーソル表示のとき垂直同期をチェック。0=しない,1=する [$0000]
+BIOS_MOUSE_THRESHOLD	equ	$0A84		;.w _MS_OFFTM/_MS_ONTMでマウスが動いたとみなすドット数 [$0005]
+BIOS_MOUSE_SPEED	equ	$0A86		;.w マウスカーソルアニメーションの1パターンあたりのフレーム数 [$0004]
+;				$0A88		;.w (マウス $000E(MW)) [$0000]
+;				$0A8A		;.w (マウス $0010(MW)) [$00F6]
+;				$0A8C		;.w マウスカーソルの表示位置のX座標/8の最小 [$0000]
+;				$0A8E		;.w マウスカーソルの表示位置のY座標の最小 [$0000]
+;				$0A90		;.w マウスカーソルの表示位置のX座標/8の最大+1 [$0080]
+;				$0A92		;.w マウスカーソルの表示位置のY座標の最大+1 [$03F0]
+;				$0A94		;.w (マウス $001A(MW)) [$0400]
+;				$0A96		;.w (マウス $001C(MW)) [$03F0]
+;				$0A98		;.w マウスカーソル表示ページY方向アドレス増分 [$0080]
+BIOS_MOUSE_LEFT		equ	$0A9A		;.w マウスカーソルX座標最小
+BIOS_MOUSE_TOP		equ	$0A9C		;.w マウスカーソルY座標最小
+BIOS_MOUSE_RIGHT	equ	$0A9E		;.w マウスカーソルX座標最大
+BIOS_MOUSE_BOTTOM	equ	$0AA0		;.w マウスカーソルY座標最大
+BIOS_MOUSE_ON		equ	$0AA2		;.w マウスカーソル表示フラグ。0=OFF,-1=ON
+BIOS_MOUSE_ANIM_ARRAY	equ	$0AA4		;.l[7] マウスカーソルアニメーションのパターンのアドレスの配列(6個+0)
+BIOS_MOUSE_ANIM_PATTERN	equ	$0AC0		;.w マウスカーソルアニメーションのパターンカウンタ
+BIOS_MOUSE_ANIM_FRAME	equ	$0AC2		;.w マウスカーソルアニメーションのフレームカウンタ
+BIOS_MOUSE_ANIM_ON	equ	$0AC4		;.w マウスカーソルアニメーションフラグ。0=OFF,-1=ON
+BIOS_MOUSE_L		equ	$0AC6		;.w マウス左ボタンの状態。0=OFF,-1=ON
+BIOS_MOUSE_R		equ	$0AC8		;.w マウス右ボタンの状態。0=OFF,-1=ON
+BIOS_MOUSE_DX		equ	$0ACA		;.w マウスX方向移動量
+BIOS_MOUSE_DY		equ	$0ACC		;.w マウスY方向移動量
+BIOS_MOUSE_X		equ	$0ACE		;.w マウスカーソルのX座標
+BIOS_MOUSE_Y		equ	$0AD0		;.w マウスカーソルのY座標
+BIOS_MOUSE_SAVED_X	equ	$0AD2		;.w 保存されたマウスカーソルのX座標
+BIOS_MOUSE_SAVED_Y	equ	$0AD4		;.w 保存されたマウスカーソルのY座標
+BIOS_MOUSE_HOT_SPOT_X	equ	$0AD6		;.w マウスカーソルのホットスポットのX座標
+BIOS_MOUSE_HOT_SPOT_Y	equ	$0AD8		;.w マウスカーソルのホットスポットのY座標
+;				$0ADA		;.w マウスカーソルの表示位置のX座標/8
+;				$0ADC		;.w マウスカーソルの表示位置のY座標
+BIOS_MOUSE_RUNNING	equ	$0ADE		;.w マウス処理中フラグ。0=処理中ではない,-1=処理中
+
+BIOS_MOUSE_D1		equ	$0AE4		;.l マウス処理開始時のd1.l
+;				$0AE6		;.w マウス処理開始時のd1.w
+BIOS_MOUSE_D2		equ	$0AE8		;.l マウス処理開始時のd2.l
+;				$0AEA		;.w マウス処理開始時のd2.w
+BIOS_MOUSE_A1		equ	$0AEC		;.l マウス処理開始時のa1.l
+BIOS_MOUSE_SAVED_2	equ	$0AF0		;.b[32] マウスカーソル表示位置のVRAMの内容(プレーン2)(32バイト)
+BIOS_MOUSE_SAVED_3	equ	$0B10		;.b[32] マウスカーソル表示位置のVRAMの内容(プレーン3)(32バイト)
+BIOS_MOUSE_CANVAS_2	equ	$0B30		;.b[32] マウスカーソル合成バッファ(プレーン2)
+BIOS_MOUSE_CANVAS_3	equ	$0B50		;.b[32] マウスカーソル合成バッファ(プレーン3)
+BIOS_MOUSE_PATTERN	equ	$0B70		;.l[16] マウスカーソル構造体のアドレスの配列(16個)
+BIOS_SOFTKEY_X		equ	$0BB0		;.w ソフトキーボード表示位置X座標 [$0186]
+BIOS_SOFTKEY_Y		equ	$0BB2		;.w ソフトキーボード表示位置Y座標 [$0002]
+BIOS_SOFTKEY_CLICKED_X	equ	$0BB4		;.w ソフトキーボードクリック位置X座標 [$0186]
+BIOS_SOFTKEY_CLICKED_Y	equ	$0BB6		;.w ソフトキーボードクリック位置Y座標 [$0002]
+BIOS_SOFTKEY_CODE	equ	$0BB8		;.w [$0061]
+BIOS_SOFTKEY_RECTANGLE	equ	$0BBA		;.l [$00000000]
+;				$0BBE		;.b [$00]
+BIOS_MOUSE_RECEIVING	equ	$0BBF		;.b マウス受信データ処理中フラグ(bit7) [$00]
+;				$0BC0		;.b [$14]
+BIOS_SOFTKEY_MODE	equ	$0BC1		;.b ソフトキーボードの表示モード。0=消去,1=表示,-1=自動 [-1]
+BIOS_SOFTKEY_STATUS	equ	$0BC2		;.b ソフトキーボードの表示状態。2=表示している [$00]
+;				$0BC3		;.b [$00]
+BIOS_SOFTKEY_RUNNING	equ	$0BC4		;.b ソフトキーボードの処理中か。0=NO,1=YES [$00]
+BIOS_TRAP_RUNNING	equ	$0BC5		;.b TRAP処理中。TRAP#13(^C)|TRAP#12(COPY)|TRAP#11(BREAK)|TRAP#10(POWER OFFまたはリセット)
+BIOS_DEN_VISIBLE	equ	$0BC6		;.b 電卓の表示状態。0=非表示,1=表示
+BIOS_DEN_HEX		equ	$0BC7		;.b 電卓のモード。0=DEC,1=HEX
+BIOS_DEN_OPERATOR	equ	$0BC8		;.b 電卓の記号。$00=なし,$11='+',$12='-',$13='*',$14='/'
+BIOS_DEN_POINT		equ	$0BC9		;.b 電卓の小数点の有無。0=なし,1=あり
+BIOS_DEN_REMAINING	equ	$0BCA		;.w 電卓,ソフトキーボードの入力バッファに残っているデータ数
+BIOS_DEN_NEXT		equ	$0BCC		;.l 電卓,ソフトキーボードの入力バッファから次に読み出すデータのアドレス
+BIOS_DEN_BUFFER		equ	$0BD0		;.w[22] 電卓,ソフトキーボードの入力バッファ
+BIOS_DEN_X		equ	$0BFC		;.w 電卓表示X座標
+BIOS_DEN_Y		equ	$0BFE		;.w 電卓表示Y座標
+BIOS_DEN_MEMORY		equ	$0C00		;.l 電卓のメモリ(上位)
+;				$0C04		;.l 電卓のメモリ(下位)
+BIOS_DEN_LEFT		equ	$0C08		;.l 電卓の左オペランド(上位)
+;			equ	$0C0C		;.l 電卓の左オペランド(下位)
+BIOS_DEN_RIGHT		equ	$0C10		;.l 電卓の右オペランド(上位)
+;			equ	$0C14		;.l 電卓の右オペランド(下位)
+BIOS_DEN_DIGITS		equ	$0C18		;.w 電卓の現在の桁数
+BIOS_DEN_ERROR		equ	$0C1A		;.b 電卓の状態。0=ノーマル,1=エラー
+BIOS_DEN_STRING		equ	$0C1B		;.b[21] 電卓の現在の文字列(下位→上位)。"-xxxxxxxxxxxxxxxE+xxx"。整数のとき末尾が"  DEC"など
+
+BIOS_ADPCMSNS		equ	$0C32		;.b ADPCMフラグ。--|リンクアレイチェーン|アレイチェーン|-|録音中|再生中|-
+BIOS_ADPCMOUT_CER	equ	$0C33		;.b DMA 3 転送終了時CER
+BIOS_DMAMODE		equ	$0C34		;.b DMA 2 転送中フラグ。$8A=_DMAMOVE,$8B=_DMAMOV_A,$8C=_DMAMOV_L
+BIOS_DMAMOVE_CER	equ	$0C35		;.b DMA 2 転送終了時CER
+BIOS_SOFTKEY_BUFFER	equ	$0C36		;.w ソフトキーボードフォント展開バッファ(X方向のドット数)
+;				$0C38		;.w ソフトキーボードフォント展開バッファ(Y方向のドット数)
+;				$0C3A		;.b[12] ソフトキーボードフォント展開バッファ(パターン)
+BIOS_FNTADR_BUFFER	equ	$0C46		;.b[72] _FNTADRのフォント作成バッファ
+
+BIOS_FDC_STATUS		equ	$0C8F
+BIOS_FDC_RESULT		equ	$0C90		;.b[32] FDCリザルトステータス。リザルトステータス0,シリンダ番号,,,,,セクタ長, x4
+
+BIOS_MSR_BUFFER_2	equ	$0CB1		;.b[3] マウス受信バッファのコピー(3バイト)
+BIOS_MSR_STATUS_2	equ	$0CB1		;.b マウス受信ステータスのコピー。Y<-128|Y>127|X<-128|X>128|--|Ron|Lon
+BIOS_MSR_DX_2		equ	$0CB2		;.b マウス受信X方向移動量のコピー。-128～127
+BIOS_MSR_DY_2		equ	$0CB3		;.b マウス受信Y方向移動量のコピー。-128～127
+BIOS_HDMAX		equ	$0CB4		;.b ハードディスクが何台繋がっているか。0～15
+BIOS_AUX_LENGTH_MASK	equ	$0CB5		;.b RS-232Cのビット長のマスク。$1F=5bit,$3F=6bit,$7F=7bit,$FF=8bit
+
+BIOS_CLOCK_SWITCH	equ	$0CB6		;.w [11,12,13] クロックスイッチ。$0000=10MHz,$0001=16MHz,$0203=25MHz
+BIOS_MPU_SPEED_ROM	equ	$0CB8		;.w [11,12,13] MPUの速さ(ROM)。1ms間にdbra空ループが何周するか。000/010はMHz値*1000/12、020/030/040/060はMHz値*1000/6
+BIOS_MPU_SPEED_RAM	equ	$0CBA		;.w [11,12,13] MPUの速さ(RAM)。1ms間にdbra空ループが何周するか。000/010はMHz値*1000/10、020/030/040/060はMHz値*1000/6
+BIOS_MPU_TYPE		equ	$0CBC		;.b [13] MPUの種類。0=68000,1=68010,2=68020,3=68030,4=68040,6=68060
+BIOS_FPU_TYPE		equ	$0CBD		;.b [13] FPU/FPCPの有無。0=なし,-1=あり
+BIOS_MMU_TYPE		equ	$0CBE		;.b [13] MMUの有無。0=なし,-1=あり
+BIOS_BOOT_STATUS	equ	$0CBF		;.b [13] 起動方法。0=電源ON,-1=リセット,-2=再起動
+
+BIOS_SCSI_BLOCK_SIZE	equ	$0CC0		;.w [13] ブロックサイズ
+BIOS_SCSI_NOT_CONFLICT	equ	$0CC2		;.b [13] SCSI-ID衝突確認。-1=本体と同じSCSI-IDの機器はない,0=未確認またはある
+BIOS_SCSI_UNBOOTABLE	equ	$0CC3		;.b [13] 起動不可
+BIOS_SCSI_OLD_SEEK	equ	$0CC0		;.l [SCSIROM] IOCSコール$40 _B_SEEKの元のベクタ
+BIOS_SCSI_OLD_VERIFY	equ	$0CC4		;.l [SCSIROM] IOCSコール$41 _B_VERIFYの元のベクタ
+BIOS_SCSI_OLD_DSKINI	equ	$0CC8		;.l [SCSIROM] IOCSコール$43 _B_DSKINIの元のベクタ
+BIOS_SCSI_OLD_DRVSNS	equ	$0CCC		;.l [SCSIROM] IOCSコール$44 _B_DRVSNSの元のベクタ
+BIOS_SCSI_OLD_WRITE	equ	$0CD0		;.l [SCSIROM] IOCSコール$45 _B_WRITEの元のベクタ
+BIOS_SCSI_OLD_READ	equ	$0CD4		;.l [SCSIROM] IOCSコール$46 _B_READの元のベクタ
+BIOS_SCSI_OLD_RECALI	equ	$0CD8		;.l [SCSIROM] IOCSコール$47 _B_RECALIの元のベクタ
+BIOS_SCSI_OLD_ASSIGN	equ	$0CDC		;.l [SCSIROM] IOCSコール$48 _B_ASSIGNの元のベクタ
+BIOS_SCSI_OLD_BADFMT	equ	$0CE0		;.l [SCSIROM] IOCSコール$4B _B_BADFMTの元のベクタ
+BIOS_SCSI_OLD_FORMAT	equ	$0CE4		;.l [SCSIROM] IOCSコール$4D _B_FORMATの元のベクタ
+BIOS_SCSI_OLD_EJECT	equ	$0CE8		;.l [SCSIROM] IOCSコール$4F _B_EJECTの元のベクタ
+BIOS_SCSI_DRIVER	equ	$0CEC		;.b デバイスドライバフラグ。デバイスドライバが登録されているSCSI-IDのビットをセット
+BIOS_BUILTIN_SCSI	equ	$0CED		;.b [16] 起動時に確認したハードディスクインターフェイス。0=SASI内蔵機,-1=SCSI内蔵機
+BIOS_SCSI_OLD_TRAP11	equ	$0CEE		;.l [SCSIROM] 例外ベクタ$2B TRAP#11(BREAK)の元のベクタ
+
+BIOS_SCSI_OLD_SEEK_16	equ	$0CF4		;.l [SCSIROM16] IOCSコール$40 _B_SEEKの元のベクタ。衝突を避けるため移動
+BIOS_MEMORY_SIZE	equ	$0CF8		;.l [16] 起動時に確認したメインメモリのサイズ。$00000000～$00C00000
+BIOS_SCSI_INITIALIZED	equ	$0CFC		;.b [SCSIROM16] SCSI初期化済みフラグ。bit0=内蔵SCSI,bit1=拡張SCSI
+
+BIOS_FDD_EXTENSION	equ	$0D00		;.l [13,FDDEVICE] _B_FORMATでドライブの種類が$4～$5,$A～$Fのとき呼ばれるルーチンのアドレス
+BIOS_MOTOR_EXTENSION	equ	$0D04		;.l [13,FDDEVICE] FDモータOFF追加ルーチンのアドレス
+BIOS_RASTER_SCROLL	equ	$0D08		;.w [13] ラスタコピースクロールの可否。0=ラスタコピー,-1=ソフトコピー
+BIOS_SMOOTH_SCROLL	equ	$0D0A		;.w [13] スムーススクロールモード。0=ジャンプ,1=4ドット,2=8ドット,3=16ドット
+BIOS_CURSOR_NOT_BLINK	equ	$0D0C		;.w [13] カーソルを点滅させないか。0=点滅させる,-1=点滅させない
+BIOS_CURSOR_START	equ	$0D0E		;.w [13] カーソル描画開始ライン*4
+BIOS_CURSOR_PATTERN	equ	$0D10		;.w [13] カーソル形状。プレーン1<<8|プレーン0。$0000は$FFFFとみなす
+BIOS_BEEP_EXTENSION	equ	$0D12		;.l [13] BEEP処理まるごと差し換えルーチンのアドレス。BIOS_BEEP_DATA=-1のとき有効
+BIOS_CSI_EXTENSION	equ	$0D16		;.l [13] ESC [処理まるごと差し換えルーチンのアドレス。0=差し換えない
+BIOS_DRAWMODE		equ	$0D1A		;.w [13] 描画モード。0=ノーマル,-1=リバース
+BIOS_TX_LENGTH_IN_DOTS	equ	$0D1C		;.w [13] _TX～の長さのパラメータの解釈。0=終点-始点,1=ドット数
+BIOS_STARTUP_FLAGS	equ	$0D1E		;.b [16] |-------|HITANYKEY|
+
+BIOS_MPU_SPEED_ROM_LONG	equ	$0D20		;.l [16] BIOS_MPU_SPEED_ROMをロングワードにしたもの
+BIOS_MPU_SPEED_RAM_LONG	equ	$0D24		;.l [16] BIOS_MPU_SPEED_RAMをロングワードにしたもの
+
+  .endif  ;__bioswork_equ__
+	.list

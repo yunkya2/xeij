@@ -1,0 +1,313 @@
+	.nlist
+  .ifndef __dosconst_equ__
+__dosconst_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	DOS定数
+;
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;	標準ハンドラ番号
+;----------------------------------------------------------------
+STDIN	equ	0	;標準入力
+STDOUT	equ	1	;標準出力
+STDERR	equ	2	;標準エラー入出力
+STDAUX	equ	3	;標準シリアル入出力
+STDPRN	equ	4	;標準プリンタ出力
+
+;----------------------------------------------------------------
+;	DOSコールエラー
+;----------------------------------------------------------------
+INVALID_FUNCTION	equ	-1	;無効なファンクションコード
+FILE_NOT_FOUND		equ	-2	;ファイルが見つからない
+DIRECTORY_NOT_FOUND	equ	-3	;ディレクトリが見つからない
+TOO_MANY_HANDLES	equ	-4	;オープンしているファイルが多すぎる
+NOT_A_FILE		equ	-5	;ディレクトリやボリュームラベルをアクセスしようとした
+HANDLE_IS_NOT_OPENED	equ	-6	;指定したハンドラがオープンされていない
+BROKEN_MEMORY_CHAIN	equ	-7	;メモリ管理領域が壊れている。実際に-7が返されることはない
+NOT_ENOUGH_MEMORY	equ	-8	;メモリが足りない
+INVALID_MEMORY_CHAIN	equ	-9	;無効なメモリ管理テーブルを指定した
+INVALID_ENVIRONMENT	equ	-10	;不正な環境を指定した。実際に-10が返されることはない
+ABNORMAL_X_FILE		equ	-11	;実行ファイルのフォーマットが異常
+INVALID_ACCESS_MODE	equ	-12	;オープンのアクセスモードが異常
+ILLEGAL_FILE_NAME	equ	-13	;ファイル名の指定が間違っている
+INVALID_PARAMETER	equ	-14	;パラメータが無効
+ILLEGAL_DRIVE_NUMBER	equ	-15	;ドライブの指定が間違っている
+CURRENT_DIRECTORY	equ	-16	;カレントディレクトリを削除しようとした
+CANNOT_IOCTRL		equ	-17	;_IOCTRLできないデバイス
+NO_MORE_FILES		equ	-18	;該当するファイルがもうない。_FILES,_NFILES
+READ_ONLY		equ	-19	;ファイルに書き込めない。主に属性R,Sのファイルに対する書き込みや削除
+DIRECTORY_EXISTS	equ	-20	;同一名のディレクトリを作ろうとした
+RM_NONEMPTY_DIRECTORY	equ	-21	;空でないディレクトリを削除しようとした
+MV_NONEMPTY_DIRECTORY	equ	-22	;空でないディレクトリを移動しようとした
+DISK_FULL		equ	-23	;ディスクフル
+DIRECTORY_FULL		equ	-24	;ディレクトリフル
+SEEK_OVER_EOF		equ	-25	;EOFを越えてシークしようとした
+ALREADY_SUPERVISOR	equ	-26	;既にスーパーバイザ状態になっている
+THREAD_EXISTS		equ	-27	;同じスレッド名が存在する
+COMMUNICATION_FAILED	equ	-28	;スレッド間通信バッファに書き込めない。ビジーまたはオーバーフロー
+TOO_MANY_THREADS	equ	-29	;これ以上バックグラウンドでスレッドを起動できない
+
+NOT_ENOUGH_LOCK_AREA	equ	-32	;ロック領域が足りない
+FILE_IS_LOCKED		equ	-33	;ロックされていてアクセスできない
+OPENED_HANDLE_EXISTS	equ	-34	;指定のドライブはハンドラがオープンされている
+
+FILE_EXISTS		equ	-80	;ファイルが存在している。_NEWFILE,_MAKETMP
+
+;			$8200000?	メモリが完全に確保できない。下位4bitは不定
+;			$81??????	メモリが確保できない。下位24bitは確保できる最大のサイズ
+
+;----------------------------------------------------------------
+;	デバイスエラー
+;----------------------------------------------------------------
+IGNORE			equ	$4000	;無視(I)
+RETRY			equ	$2000	;再実行(R)
+ABORT			equ	$1000	;中止(A)
+
+INVALID_UNIT_NUMBER	equ	$0001	;無効なユニット番号を指定しました
+INSERT_MEDIA		equ	$0002	;ディスクが入っていません、入れてください
+UNKNOWN_COMMAND		equ	$0003	;デバイスドライバに無効なコマンドを指定しました
+CRC_ERROR		equ	$0004	;ＣＲＣエラー
+MANEGEMENT_AREA_BROKEN	equ	$0005	;ディスクの管理領域が破壊されています、使用不能です
+SEEK_ERROR		equ	$0006	;シークエラー
+INVALID_MEDIA		equ	$0007	;無効なメディアを使用しました
+SECTOR_NOT_FOUND	equ	$0008	;セクタが見つかりません
+PRINTER_NOT_CONNECTED	equ	$0009	;プリンタがつながっていません
+WRITE_ERROR		equ	$000A	;書き込みエラー
+READ_ERROR		equ	$000B	;読み込みエラー
+MISCELLANEOUS_ERROR	equ	$000C	;エラーが発生しました
+UNPROTECT_MEDIA		equ	$000D	;プロテクトをはずして、同じディスクを入れてください
+CANNOT_WRITE		equ	$000E	;書き込み不可能です
+FILE_SHARING_VIOLATION	equ	$000F	;ファイル共有違反です。現在使用できません。
+
+;----------------------------------------------------------------
+;	デバイスヘッダ
+;----------------------------------------------------------------
+	.offset	0
+DH_NEXT:		.ds.l	1	;$0000	ネクストデバイスドライバハンドル。-1=終わり
+DH_TYPE:		.ds.w	1	;$0004	デバイスタイプ
+					;	bit15	0=ブロックデバイス,特殊デバイス
+					;		1=キャラクタデバイス
+					;	bit14	0=IOCTRL不可
+					;		1=IOCTRL可
+					;	bit13	0=通常のデバイスドライバ
+					;			bit12	予約
+					;		1=特殊デバイスドライバ
+					;			bit12	0=通常のデバイスドライバ
+					;				1=特殊ネットワークデバイスドライバ
+					;	bit11-7	予約
+					;	bit6	0=特殊コントロール不可
+					;		1=特殊コントロール可
+					;	bit5	0=COOKEDモード
+					;		1=RAWモード
+					;	bit4	0=通常のデバイスドライバ
+					;		1=特殊デバイスドライバ
+					;	bit3	1=CLOCK
+					;	bit2	1=NUL
+					;	bit1	1=標準出力
+					;	bit0	1=標準入力
+DH_STRATEGY:		.ds.l	1	;$0006	ストラテジルーチンのハンドル
+DH_INTERRUPT:		.ds.l	1	;$000A	インタラプトルーチンのハンドル
+DH_NAME:		.ds.b	8	;$000E	デバイス名
+DH_SIZE:				;$0016	(22バイト)
+	.text
+
+;----------------------------------------------------------------
+;	メモリ管理テーブル
+;----------------------------------------------------------------
+	.offset	0
+MM_PREV:		.ds.l	1	;$0000	直前のメモリ管理テーブルのアドレス。0=先頭
+MM_PARENT:		.ds.l	1	;$0004	このブロックを確保したプロセスのメモリ管理テーブルのアドレス
+					;	最上位1バイトは
+					;		$00=通常のメモリブロック
+					;		$FD=_S_PROCESSによるサブのメモリ管理の親のメモリブロック
+					;		$FF=常駐したプロセスのメモリブロック
+MM_TAIL:		.ds.l	1	;$0008	使用している末尾アドレス+1
+MM_NEXT:		.ds.l	1	;$000C	直後のメモリ管理テーブルのアドレス。0=末尾
+MM_SIZE:				;$0010	(16バイト)
+;以下はプロセス管理テーブル
+MM_ENVIRONMENT:		.ds.l	1	;$0010	環境の領域のアドレス
+MM_EXITVC:		.ds.l	1	;$0014	_EXITVCのベクタ。親の_EXECの直後
+MM_CTRLVC:		.ds.l	1	;$0018	_CTRLVCのベクタ
+MM_ERRJVC:		.ds.l	1	;$001C	_ERRJVCのベクタ
+MM_COMMAND_LINE:	.ds.l	1	;$0020	コマンドラインのアドレス
+MM_HANDLER_MAP:		.ds.b	12	;$0024	ハンドラの使用状況
+MM_BSS:			.ds.l	1	;$0030	bssの先頭
+MM_HEAP:		.ds.l	1	;$0034	ヒープの先頭
+MM_STACK:		.ds.l	1	;$0038	スタックエリアの先頭
+MM_USP:			.ds.l	1	;$003C	親のUSP
+MM_SSP:			.ds.l	1	;$0040	親のSSP
+MM_SR:			.ds.w	1	;$0044	親のSR
+MM_ABORT_SR:		.ds.w	1	;$0046	アボート時のSR
+MM_ABORT_SSP:		.ds.l	1	;$0048	アボート時のSSP
+MM_TRAP10:		.ds.l	1	;$004C	TRAP#10のベクタ
+MM_TRAP11:		.ds.l	1	;$0050	TRAP#11のベクタ
+MM_TRAP12:		.ds.l	1	;$0054	TRAP#12のベクタ
+MM_TRAP13:		.ds.l	1	;$0058	TRAP#13のベクタ
+MM_TRAP14:		.ds.l	1	;$005C	TRAP#14のベクタ
+MM_OS_FLAG:		.ds.l	1	;$0060	OSフラグ。-1=CONFIG.SYSのSHELLで起動,0=その他
+MM_MODULE_NUMBER:	.ds.b	1	;$0064	モジュール番号
+			.ds.b	3	;$0065	未定義
+MM_CHILD_MEMORY:	.ds.l	1	;$0068	子プロセスのメモリ管理テーブル
+			.ds.l	5	;$006C	予約
+MM_PATH:		.ds.b	68	;$0080	実行ファイルのパス
+MM_NAME:		.ds.b	24	;$00C4	実行ファイルのファイル名
+			.ds.l	9	;$00DC	予約
+MM_PROGRAM:				;$0100	プログラムの先頭
+	.text
+
+;----------------------------------------------------------------
+;	プロセス管理テーブル
+;----------------------------------------------------------------
+	.offset	0
+PM_ENVIRONMENT:		.ds.l	1	;$0000	環境の領域のアドレス
+PM_EXITVC:		.ds.l	1	;$0004	_EXITVCのベクタ。親の_EXECの直後
+PM_CTRLVC:		.ds.l	1	;$0008	_CTRLVCのベクタ
+PM_ERRJVC:		.ds.l	1	;$000C	_ERRJVCのベクタ
+PM_COMMAND_LINE:	.ds.l	1	;$0010	コマンドラインのアドレス
+PM_HANDLER_MAP:		.ds.b	12	;$0014	ハンドラの使用状況
+PM_BSS:			.ds.l	1	;$0020	bssの先頭
+PM_HEAP:		.ds.l	1	;$0024	ヒープの先頭
+PM_STACK:		.ds.l	1	;$0028	スタックエリアの先頭
+PM_USP:			.ds.l	1	;$002C	親のUSP
+PM_SSP:			.ds.l	1	;$0030	親のSSP
+PM_SR:			.ds.w	1	;$0034	親のSR
+PM_ABORT_SR:		.ds.w	1	;$0036	アボート時のSR
+PM_ABORT_SSP:		.ds.l	1	;$0038	アボート時のSSP
+PM_TRAP_10:		.ds.l	1	;$003C	TRAP#10のベクタ
+PM_TRAP_11:		.ds.l	1	;$0040	TRAP#11のベクタ
+PM_TRAP_12:		.ds.l	1	;$0044	TRAP#12のベクタ
+PM_TRAP_13:		.ds.l	1	;$0048	TRAP#13のベクタ
+PM_TRAP_14:		.ds.l	1	;$004C	TRAP#14のベクタ
+PM_OS_FLAG:		.ds.l	1	;$0050	OSフラグ。-1=CONFIG.SYSのSHELLで起動,0=その他
+PM_MODULE_NUMBER:	.ds.b	1	;$0054	モジュール番号
+			.ds.b	3	;$0055	未定義
+PM_CHILD_MEMORY:	.ds.l	1	;$0058	子プロセスのメモリ管理テーブル
+			.ds.l	5	;$005C	予約
+PM_PATH:		.ds.b	68	;$0070	実行ファイルのパス
+PM_NAME:		.ds.b	24	;$00B4	実行ファイルのファイル名
+			.ds.l	9	;$00CC	予約
+PM_PROGRAM:				;$00F0	プログラムの先頭
+	.text
+
+;----------------------------------------------------------------
+;	_NAMESTS形式のファイル名
+;----------------------------------------------------------------
+	.offset	0
+NS_FLAG:		.ds.b	1	;$0000	フラグ
+NS_DRIVE:		.ds.b	1	;$0001	内部ドライブ番号。0=A:
+NS_PATH:		.ds.b	65	;$0002	パス。前後と区切りは$09または'\'
+NS_NAME_1:		.ds.b	8	;$0043	ファイル名1。残りは' '
+NS_EXT:			.ds.b	3	;$004B	拡張子。残りは' '
+NS_NAME_2:		.ds.b	10	;$004E	ファイル名2。残りは0
+NS_SIZE:				;$0056	(88バイト)
+	.text
+
+;----------------------------------------------------------------
+;	_NAMECKのバッファ
+;----------------------------------------------------------------
+	.offset	0
+NC_DRIVE:		.ds.b	2	;$0000	ドライブ名。'A:'
+NC_PATH:		.ds.b	65	;$0002	パス。'/path/',0
+NC_NAME:		.ds.b	19	;$0043	ファイル名。'name',0
+NC_EXT:			.ds.b	5	;$0056	拡張子。'.ext',0
+NC_SIZE_1:		.ds.b	1	;$005B	(91バイト)
+NC_SIZE:				;$005C	(92バイト)
+	.text
+
+;----------------------------------------------------------------
+;	_FILES/_NFILESのバッファ
+;----------------------------------------------------------------
+	.offset	0
+FI_OS_ATTRIBUTE:	.ds.b	1	;$0000	検索する属性
+FI_OS_DRIVE:		.ds.b	1	;$0001	検索する内部ドライブ番号。0=A:
+FI_OS_SECTOR:		.ds.l	1	;$0002	エントリがあるセクタ番号
+FI_OS_CONTINUOUS:	.ds.w	1	;$0006	連続しているセクタ数-1
+FI_OS_OFFSET:		.ds.w	1	;$0008	セクタ先頭からのオフセット。-1=該当するファイルがもうない
+FI_OS_NAME:		.ds.b	8	;$000A	検索するファイル名
+FI_OS_EXT:		.ds.b	3	;$0012	検索する拡張子
+FI_ATTRIBUTE:		.ds.b	1	;$0015	属性
+FI_TIME:		.ds.w	1	;$0016	時刻
+FI_DATE:		.ds.w	1	;$0018	日付
+FI_LENGTH:		.ds.l	1	;$001A	ファイルサイズ
+FI_NAME:		.ds.b	23	;$001E	ファイル名
+FI_SIZE_1:		.ds.b	1	;$0035	(53バイト)
+FI_SIZE:				;$0036	(54バイト)
+	.offset	FI_SIZE_1
+FI_LONG_NAMESTS:
+FI_LONG_DRIVE:		.ds.b	2	;$0035	内部ドライブ名。'A:'
+FI_LONG_PATH:		.ds.b	65	;$0037	パス。区切りは'\'
+FI_LONG_NAME_1:		.ds.b	8	;$0078	ファイル名1。残りは' 'または'?'
+FI_LONG_EXT:		.ds.b	3	;$0080	拡張子。残りは' 'または'?'
+FI_LONG_NAME_2:		.ds.b	10	;$0083	ファイル名2。残りは0
+FI_LONG_SIZE:				;$008D
+	.text
+
+;----------------------------------------------------------------
+;	スレッド管理テーブル
+;----------------------------------------------------------------
+	.offset	0
+TH_NEXT:		.ds.l	1	;$0000	次のスレッド管理テーブルのアドレス
+TH_SLEEP_FLAG:		.ds.b	1	;$0004	スリープフラグ。-2=強制スリープ状態,-1=スリープ状態,0=実行中
+TH_COUNT:		.ds.b	1	;$0005	カウンタ
+TH_MAX_COUNT:		.ds.b	1	;$0006	最大カウント。優先レベル
+TH_DOSCALL_NUMBER:	.ds.b	1	;$0007	レベル0で入ったDOSコールの番号
+TH_PROCESS_MEMORY:	.ds.l	1	;$0008	実行中のプロセスのメモリ管理テーブル
+TH_USP:			.ds.l	1	;$000C	USP
+TH_D0:			.ds.l	1	;$0010	D0
+TH_D1:			.ds.l	1	;$0014	D1
+TH_D2:			.ds.l	1	;$0018	D2
+TH_D3:			.ds.l	1	;$001C	D3
+TH_D4:			.ds.l	1	;$0020	D4
+TH_D5:			.ds.l	1	;$0024	D5
+TH_D6:			.ds.l	1	;$0028	D6
+TH_D7:			.ds.l	1	;$002C	D7
+TH_A0:			.ds.l	1	;$0030	A0
+TH_A1:			.ds.l	1	;$0034	A1
+TH_A2:			.ds.l	1	;$0038	A2
+TH_A3:			.ds.l	1	;$003C	A3
+TH_A4:			.ds.l	1	;$0040	A4
+TH_A5:			.ds.l	1	;$0044	A5
+TH_A6:			.ds.l	1	;$0048	A6
+TH_SR:			.ds.w	1	;$004C	SR
+TH_PC:			.ds.l	1	;$004E	PC
+TH_SSP:			.ds.l	1	;$0052	SSP
+TH_DOSCALL_LEVEL:	.ds.w	1	;$0056	DOSコールのレベル
+TH_DOSCALL_SP:		.ds.l	1	;$0058	DOSコールにレベル0で入ったときのSP
+TH_SEND_BUFFER:		.ds.l	1	;$005C	スレッド間通信バッファのアドレス
+TH_THREAD_NAME:		.ds.b	16	;$0060	スレッド名
+TH_WAIT_TIME:		.ds.l	1	;$0070	ウェイトタイム
+;	以下は_GET_PRでコピーされない
+TH_MEMORY_START:	.ds.l	1	;$0074	_MALLOCできるメモリ空間の先頭アドレス
+TH_MEMORY_END:		.ds.l	1	;$0078	_MALLOCできるメモリ空間の末尾アドレス+1
+TH_SIZE:				;$007C	(124バイト)
+	.text
+
+;----------------------------------------------------------------
+;	DOSコールにレベル0で入ったときのSSPからのオフセット
+;----------------------------------------------------------------
+	.offset	0
+DOS_STACK_D1:		.ds.l	1	;$0000	D1
+DOS_STACK_D2:		.ds.l	1	;$0004	D2
+DOS_STACK_D3:		.ds.l	1	;$0008	D3
+DOS_STACK_D4:		.ds.l	1	;$000C	D4
+DOS_STACK_D5:		.ds.l	1	;$0010	D5
+DOS_STACK_D6:		.ds.l	1	;$0014	D6
+DOS_STACK_D7:		.ds.l	1	;$0018	D7
+DOS_STACK_A0:		.ds.l	1	;$001C	A0
+DOS_STACK_A1:		.ds.l	1	;$0020	A1
+DOS_STACK_A2:		.ds.l	1	;$0024	A2
+DOS_STACK_A3:		.ds.l	1	;$0028	A3
+DOS_STACK_A4:		.ds.l	1	;$002C	A4
+DOS_STACK_A5:		.ds.l	1	;$0030	A5
+DOS_STACK_A6:		.ds.l	1	;$0034	A6
+DOS_STACK_SR:		.ds.w	1	;$0038	SR
+DOS_STACK_PC:		.ds.l	1	;$003A	PC
+DOS_STACK_FORMAT:	.ds.w	1	;$003E	フォーマットとベクタオフセット
+DOS_STACK_SSP:				;$0040	(DOSコールにレベル0で入る前のSSPの位置)
+	.text
+
+  .endif  ;__dosconst_equ__
+	.list

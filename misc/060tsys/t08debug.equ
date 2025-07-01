@@ -1,0 +1,210 @@
+	.lall
+
+debug .macro mes,n,x0,x1,x2,x3,x4,x5
+    .local ptr1
+    .local ptr2
+    .local ptr3
+    .local skip
+    .ifdef __DEBUG__
+      .fail n+0>6
+	move.w	ccr,-(sp)
+	movem.l	d0/a1,-(sp)
+	lea.l	(ptr1,pc),a1
+	jsr	debugPrint
+      .if n+0>0
+	movem.l	(sp),d0/a1
+	move.l	x0,d0
+	jsr	debugHex8
+      .endif
+      .if n+0>1
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.l	x1,d0
+	jsr	debugHex8
+      .endif
+      .if n+0>2
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.l	x2,d0
+	jsr	debugHex8
+      .endif
+      .if n+0>3
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.l	x3,d0
+	jsr	debugHex8
+      .endif
+      .if n+0>4
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.l	x4,d0
+	jsr	debugHex8
+      .endif
+      .if n+0>5
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.l	x5,d0
+	jsr	debugHex8
+      .endif
+	lea.l	(ptr2,pc),a1
+	jsr	debugPrint
+	movem.l	(sp)+,d0/a1
+	move.w	(sp)+,ccr
+	bra	skip
+ptr1:	.dc.b	mes,0
+ptr2:	.dc.b	13,10,0
+ptr3:	.dc.b	',',0
+	.even
+skip:
+    .endif
+  .endm
+
+debugByte .macro mes,n,x0,x1,x2,x3,x4,x5
+    .local ptr1
+    .local ptr2
+    .local ptr3
+    .local skip
+    .ifdef __DEBUG__
+      .fail n+0>6
+	move.w	ccr,-(sp)
+	movem.l	d0/a1,-(sp)
+	lea.l	(ptr1,pc),a1
+	jsr	debugPrint
+      .if n+0>0
+	movem.l	(sp),d0/a1
+	move.b	x0,d0
+	jsr	debugHex2
+      .endif
+      .if n+0>1
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.b	x1,d0
+	jsr	debugHex2
+      .endif
+      .if n+0>2
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.b	x2,d0
+	jsr	debugHex2
+      .endif
+      .if n+0>3
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.b	x3,d0
+	jsr	debugHex2
+      .endif
+      .if n+0>4
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.b	x4,d0
+	jsr	debugHex2
+      .endif
+      .if n+0>5
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.b	x5,d0
+	jsr	debugHex2
+      .endif
+	lea.l	(ptr2,pc),a1
+	jsr	debugPrint
+	movem.l	(sp)+,d0/a1
+	move.w	(sp)+,ccr
+	bra	skip
+ptr1:	.dc.b	mes,0
+ptr2:	.dc.b	13,10,0
+ptr3:	.dc.b	',',0
+	.even
+skip:
+    .endif
+  .endm
+
+debugWord .macro mes,n,x0,x1,x2,x3,x4,x5
+    .local ptr1
+    .local ptr2
+    .local ptr3
+    .local skip
+    .ifdef __DEBUG__
+      .fail n+0>6
+	move.w	ccr,-(sp)
+	movem.l	d0/a1,-(sp)
+	lea.l	(ptr1,pc),a1
+	jsr	debugPrint
+      .if n+0>0
+	movem.l	(sp),d0/a1
+	move.w	x0,d0
+	jsr	debugHex4
+      .endif
+      .if n+0>1
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.w	x1,d0
+	jsr	debugHex4
+      .endif
+      .if n+0>2
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.w	x2,d0
+	jsr	debugHex4
+      .endif
+      .if n+0>3
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.w	x3,d0
+	jsr	debugHex4
+      .endif
+      .if n+0>4
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.w	x4,d0
+	jsr	debugHex4
+      .endif
+      .if n+0>5
+	lea.l	(ptr3,pc),a1
+	jsr	debugPrint
+	movem.l	(sp),d0/a1
+	move.w	x5,d0
+	jsr	debugHex4
+      .endif
+	lea.l	(ptr2,pc),a1
+	jsr	debugPrint
+	movem.l	(sp)+,d0/a1
+	move.w	(sp)+,ccr
+	bra	skip
+ptr1:	.dc.b	mes,0
+ptr2:	.dc.b	13,10,0
+ptr3:	.dc.b	',',0
+	.even
+skip:
+    .endif
+  .endm
+
+debugChar .macro chr
+    .ifdef __DEBUG__
+	move.w	ccr,-(sp)
+	move.l	d1,-(sp)
+	moveq.l	#chr,d1
+	jsr	debugPutc
+	move.l	(sp)+,d1
+	move.w	(sp)+,ccr
+    .endif
+  .endm
+
+debugKeyWait .macro
+    .ifdef __DEBUG__
+	jsr	debugKeyinp
+    .endif
+  .endm

@@ -1,0 +1,948 @@
+	.nlist
+
+;----------------------------------------------------------------
+;
+;	ベクタアドレス
+;
+;----------------------------------------------------------------
+ACCESS_ERROR	equ	$0008	;Access Error
+PRIVILEGE	equ	$0020	;Privilege Violation
+
+FLINE	equ	$002C	;Line 1111 Emulator (Unimplemented F-Line Opcode)
+BSUN	equ	$00C0	;Floating-Point Branch or Set on Unordered Condition
+INEX	equ	$00C4	;Floating-Point Inexact Result
+DZ	equ	$00C8	;Floating-Point Divide-by-Zero
+UNFL	equ	$00CC	;Floating-Point Underflow
+OPERR	equ	$00D0	;Floating-Point Operand Error
+OVFL	equ	$00D4	;Floating-Point Overflow
+SNAN	equ	$00D8	;Floating-Point Signaling NAN
+UNSUPP	equ	$00DC	;Floating-Point Unimplemented Data Type
+EFFADD	equ	$00F0	;Unimplemented Effective Address
+UNINT	equ	$00F4	;Unimplemented Integer Instruction
+
+PRNINT	equ	$018C	;プリンタレディー割り込み
+
+
+
+;----------------------------------------------------------------
+;
+;	アドレス変換
+;
+;----------------------------------------------------------------
+LOGICAL_WIDTH	equ	30				;論理アドレス空間のビット数(29～31)
+							;	30=1GB
+LOGICAL_SIZE	equ	1<<LOGICAL_WIDTH		;論理アドレス空間のサイズ(末尾+1)
+							;	$40000000
+LOGICAL_MASK	equ	LOGICAL_SIZE-1			;論理アドレス空間のサイズ-1(末尾,マスク)
+							;	$3FFFFFFF
+
+PAGE_INDEX_WIDTH	equ	5			;ページインデックスフィールドのビット数(5～6)
+							;	5
+PAGE_INDEX_SIZE		equ	1<<PAGE_INDEX_WIDTH	;ページテーブル1個に含まれるページデスクリプタの個数
+							;	32
+PAGE_INDEX_MASK		equ	PAGE_INDEX_SIZE-1	;ページインデックスフィールドのマスク
+							;	31
+
+PAGE_OFFSET_WIDTH	equ	18-PAGE_INDEX_WIDTH	;ページ内オフセットのビット数(12～13)
+							;	13=8KB/page
+PAGE_OFFSET_SIZE	equ	1<<PAGE_OFFSET_WIDTH	;1ページのサイズ
+							;	$00002000=8KB/page
+PAGE_OFFSET_MASK	equ	PAGE_OFFSET_SIZE-1	;ページ内オフセットのマスク
+							;	$00001FFF
+
+PAGE_MASK	equ	LOGICAL_SIZE-PAGE_OFFSET_SIZE	;ページの先頭アドレスのマスク
+							;	$3FFFE000
+							;ページマスクはLOGICAL_MASKを伴うこと
+
+ROOT_DESC_SIZE		equ	1<<(7+2)		;ルートテーブルのサイズ
+							;	$00000200
+POINTER_DESC_SIZE	equ	1<<(7+2)		;ポインタテーブル1個のサイズ
+							;	$00000200
+PAGE_DESC_SIZE		equ	1<<(PAGE_INDEX_WIDTH+2)	;ページテーブル1個のサイズ
+							;	$00000080
+
+ROOT_DESC_MASK		equ	LOGICAL_SIZE-ROOT_DESC_SIZE	;ルートテーブルの先頭のアドレスのマスク
+								;	$3FFFFE00
+POINTER_DESC_MASK	equ	LOGICAL_SIZE-POINTER_DESC_SIZE	;ポインタテーブルの先頭のアドレスのマスク
+								;	$3FFFFE00
+PAGE_DESC_MASK		equ	LOGICAL_SIZE-PAGE_DESC_SIZE	;ページテーブルの先頭のアドレスのマスク
+								;	$3FFFFF80
+
+
+;----------------------------------------------------------------
+;
+;	ステータスレジスタ
+;
+;----------------------------------------------------------------
+;SR
+SR_C_BIT	equ	0
+SR_V_BIT	equ	1
+SR_Z_BIT	equ	2
+SR_N_BIT	equ	3
+SR_X_BIT	equ	4
+SR_I_BIT	equ	8
+SR_M_BIT	equ	12
+SR_S_BIT	equ	13
+SR_T_BIT	equ	15
+;			 T SM III   XNZVC
+SR_C		equ	%0000000000000001	;CARRY
+SR_V		equ	%0000000000000010	;OVERFLOW
+SR_Z		equ	%0000000000000100	;ZERO
+SR_N		equ	%0000000000001000	;NEGATIVE
+SR_X		equ	%0000000000010000	;EXTEND
+SR_I_MASK	equ	%0000011100000000	;INTERRUPT PRIORITY MASK
+SR_I_0		equ	%0000000000000000	;INTERRUPT PRIORITY 0
+SR_I_1		equ	%0000000100000000	;INTERRUPT PRIORITY 1
+SR_I_2		equ	%0000001000000000	;INTERRUPT PRIORITY 2
+SR_I_3		equ	%0000001100000000	;INTERRUPT PRIORITY 3
+SR_I_4		equ	%0000010000000000	;INTERRUPT PRIORITY 4
+SR_I_5		equ	%0000010100000000	;INTERRUPT PRIORITY 5
+SR_I_6		equ	%0000011000000000	;INTERRUPT PRIORITY 6
+SR_I_7		equ	%0000011100000000	;INTERRUPT PRIORITY 7
+SR_M		equ	%0001000000000000	;MASTER/INTERRUPT STATE
+SR_S		equ	%0010000000000000	;SUPERVISOR/USER STATE
+SR_T		equ	%1000000000000000	;TRACE ENABLE
+
+PUSH_SR_DI	.macro
+	move.w	sr,-(sp)
+	ori.w	#SR_I_7,sr
+	.endm
+
+POP_SR	.macro
+	move.w	(sp)+,sr
+	.endm
+
+;----------------------------------------------------------------
+;
+;	コントロールレジスタ
+;
+;----------------------------------------------------------------
+;CACR
+CACR_EDC_BIT	equ	31	;Enable Data Cache
+CACR_NAD_BIT	equ	30	;No Allocate Mode (Data Cache)
+CACR_ESB_BIT	equ	29	;Enable Store Buffer
+CACR_DPI_BIT	equ	28	;Disable CPUSH Invalidation
+CACR_FOC_BIT	equ	27	;1/2 Cache Operation Mode Enable (Data Cache)
+CACR_EBC_BIT	equ	23	;Enable Branch Cache
+CACR_CABC_BIT	equ	22	;Clear All Entries In the Branch Cache
+CACR_CUBC_BIT	equ	21	;Clear All User Entries in the Branch Cache
+CACR_EIC_BIT	equ	15	;Enable Instruction Cache
+CACR_NAI_BIT	equ	14	;No Allocate Mode (Instruction Cache)
+CACR_FIC_BIT	equ	13	;1/2 Cache Operation Mode Enable (Instruction Cache)
+;			EDC NAD ESB DPI FOC EBC CABC CUBC  EIC NAI FIC
+;			 31 30  29  28  27   23 22   21     15 14  13
+CACR_EDC	equ	%1__0___0___0___0_000_0_0____0_00000_0_0___0_0000000000000
+CACR_NAD	equ	%0__1___0___0___0_000_0_0____0_00000_0_0___0_0000000000000
+CACR_ESB	equ	%0__0___1___0___0_000_0_0____0_00000_0_0___0_0000000000000
+CACR_DPI	equ	%0__0___0___1___0_000_0_0____0_00000_0_0___0_0000000000000
+CACR_FOC	equ	%0__0___0___0___1_000_0_0____0_00000_0_0___0_0000000000000
+CACR_EBC	equ	%0__0___0___0___0_000_1_0____0_00000_0_0___0_0000000000000
+CACR_CABC	equ	%0__0___0___0___0_000_0_1____0_00000_0_0___0_0000000000000
+CACR_CUBC	equ	%0__0___0___0___0_000_0_0____1_00000_0_0___0_0000000000000
+CACR_EIC	equ	%0__0___0___0___0_000_0_0____0_00000_1_0___0_0000000000000
+CACR_NAI	equ	%0__0___0___0___0_000_0_0____0_00000_0_1___0_0000000000000
+CACR_FIC	equ	%0__0___0___0___0_000_0_0____0_00000_0_0___1_0000000000000
+;デフォルトはCACR_EDC|CACR_ESB|CACR_DPI|CACR_EBC|CACR_EIC
+
+CACHE_FLUSH	.macro	Dn
+	cmpi.b	#4,$0CBC.w
+	bhs	@_060
+	movec.l	cacr,Dn
+	or.w	#$0808,Dn		;CD=1,CI=1
+	movec.l	Dn,cacr
+	bra	@exit
+@_060:	cpusha	bc
+@exit:
+	.endm
+
+PUSH_CACR	.macro	Dn
+	movec.l	cacr,Dn
+	move.l	Dn,-(sp)
+	.endm
+
+PUSH_CACR_DISABLE_BC	.macro	Dn
+	movec.l	cacr,Dn
+	move.l	Dn,-(sp)
+	cmpi.b	#4,$0CBC.w
+	bhs	@_060
+	and.w	#$FEFE,Dn		;ED=0,EI=0
+	or.w	#$0808,Dn		;CD=1,CI=1
+	movec.l	Dn,cacr
+	bra	@exit
+@_060:	and.l	#$7FFF7FFF,Dn		;EDC=0,EIC=0
+	movec.l	Dn,cacr
+	cpusha	bc
+@exit:
+	.endm
+
+PUSH_CACR_DISABLE_DC	.macro	Dn
+	movec.l	cacr,Dn
+	move.l	Dn,-(sp)
+	cmpi.b	#4,$0CBC.w
+	bhs	@_060
+	bclr.l	#8,Dn			;ED=0
+	beq	@exit
+	or.w	#$0800,Dn		;CD=1
+	movec.l	Dn,cacr
+	bra	@exit
+@_060:	bclr.l	#31,Dn			;EDC=0
+	beq	@exit
+	movec.l	Dn,cacr
+	cpusha	dc
+@exit:
+	.endm
+
+POP_CACR	.macro	Dn
+	move.l	(sp)+,Dn
+	movec.l	Dn,cacr
+	.endm
+
+;TC
+TC_E_BIT	equ	15	;Enable
+TC_P_BIT	equ	14	;Page Size
+TC_NAD_BIT	equ	13	;No Allocate Mode (Data Cache)
+TC_NAI_BIT	equ	12	;No Allocate Mode (Instruction Cache)
+TC_FOTC_BIT	equ	11	;1/2-Cache Mode (Data ATC)
+TC_FITC_BIT	equ	10	;1/2-Cache Mode (Instruction ATC)
+TC_DCO_BIT	equ	8	;Default Cache Mode (Data Cache)
+TC_DUO_BIT	equ	6	;Default UPA bits (Data Cache)
+TC_DWO_BIT	equ	5	;Default Write Protect (Data Cache)
+TC_DCI_BIT	equ	3	;Default Cache Mode (Instruction Cache)
+TC_DUI_BIT	equ	1	;Default UPA Bits (Instruction Cache)
+;			 E  P NAD NAI FOTC FITC DCO DUO DWO DCI DUI
+;			 15 14 13 12  11   10   98  76  5   43  21
+TC_E		equ	%1__0__0__0___0____0____00__00__0___00__00_0
+TC_P		equ	%0__1__0__0___0____0____00__00__0___00__00_0
+TC_NAD		equ	%0__0__1__0___0____0____00__00__0___00__00_0
+TC_NAI		equ	%0__0__0__1___0____0____00__00__0___00__00_0
+TC_FOTC		equ	%0__0__0__0___1____0____00__00__0___00__00_0
+TC_FITC		equ	%0__0__0__0___0____1____00__00__0___00__00_0
+TC_DCO_WT	equ	%0__0__0__0___0____0____00__00__0___00__00_0
+TC_DCO_CB	equ	%0__0__0__0___0____0____01__00__0___00__00_0
+TC_DCO_NP	equ	%0__0__0__0___0____0____10__00__0___00__00_0
+TC_DCO_NI	equ	%0__0__0__0___0____0____11__00__0___00__00_0
+TC_DUO_00	equ	%0__0__0__0___0____0____00__00__0___00__00_0
+TC_DUO_01	equ	%0__0__0__0___0____0____00__01__0___00__00_0
+TC_DUO_10	equ	%0__0__0__0___0____0____00__10__0___00__00_0
+TC_DUO_11	equ	%0__0__0__0___0____0____00__11__0___00__00_0
+TC_DWO		equ	%0__0__0__0___0____0____00__00__1___00__00_0
+TC_DCI_WT	equ	%0__0__0__0___0____0____00__00__0___00__00_0
+TC_DCI_CB	equ	%0__0__0__0___0____0____00__00__0___01__00_0
+TC_DCI_NP	equ	%0__0__0__0___0____0____00__00__0___10__00_0
+TC_DCI_NI	equ	%0__0__0__0___0____0____00__00__0___11__00_0
+TC_DUI_00	equ	%0__0__0__0___0____0____00__00__0___00__00_0
+TC_DUI_01	equ	%0__0__0__0___0____0____00__00__0___00__01_0
+TC_DUI_10	equ	%0__0__0__0___0____0____00__00__0___00__10_0
+TC_DUI_11	equ	%0__0__0__0___0____0____00__00__0___00__11_0
+
+;Transparent Translation Registers
+TT_BASE_BIT	equ	24	;Logical Address Base
+TT_MASK_BIT	equ	16	;Logical Address Mask
+TT_E_BIT	equ	15	;Enable
+TT_S_BIT	equ	13	;Supervisor Mode
+TT_U1_BIT	equ	9	;User Page Attributes
+TT_U0_BIT	equ	8	;User Page Attributes
+TT_CM_BIT	equ	5	;Cache Mode
+TT_W_BIT	equ	2	;Write Protect
+;			   BASE     MASK   E iS    U1U0  CM    W
+TT_BASE_MASK	equ	%11111111_00000000_0_00_000_00_0_00_00_0_00
+TT_MASK_MASK	equ	%00000000_11111111_0_00_000_00_0_00_00_0_00
+TT_E		equ	%00000000_00000000_1_00_000_00_0_00_00_0_00
+TT_S_MASK	equ	%00000000_00000000_0_11_000_00_0_00_00_0_00
+TT_S_USER	equ	%00000000_00000000_0_00_000_00_0_00_00_0_00
+TT_S_SUPER	equ	%00000000_00000000_0_01_000_00_0_00_00_0_00
+TT_S_IGNORE	equ	%00000000_00000000_0_10_000_00_0_00_00_0_00
+TT_U1		equ	%00000000_00000000_0_00_000_10_0_00_00_0_00
+TT_U0		equ	%00000000_00000000_0_00_000_01_0_00_00_0_00
+TT_CM_MASK	equ	%00000000_00000000_0_00_000_00_0_11_00_0_00
+TT_CM_WT	equ	%00000000_00000000_0_00_000_00_0_00_00_0_00
+TT_CM_CB	equ	%00000000_00000000_0_00_000_00_0_01_00_0_00
+TT_CM_NP	equ	%00000000_00000000_0_00_000_00_0_10_00_0_00
+TT_CM_NI	equ	%00000000_00000000_0_00_000_00_0_11_00_0_00
+TT_W		equ	%00000000_00000000_0_00_000_00_0_00_00_1_00
+
+;Transfer Cycle Type
+;			 TT
+TT_MOVE		equ	%00
+TT_MOVE16	equ	%01
+TT_MOVES	equ	%10
+TT_INTERRUPT	equ	%11
+
+;Transfer Cycle Modifier
+;			 TM
+TM_PUSH		equ	%000
+TM_USER_DATA	equ	%001
+TM_USER_CODE	equ	%010
+TM_MMU_DATA	equ	%011
+TM_MMU_CODE	equ	%100
+TM_SUPER_DATA	equ	%101
+TM_SUPER_CODE	equ	%110
+;		equ	%111
+
+;Fanction Code
+;			 FC	 TT TM
+FC_CACHE_PUSH	equ	%000	;10 000
+FC_USER_DATA	equ	%001	;00 001
+FC_USER_CODE	equ	%010	;00 010
+FC_MMU_DATA	equ	%011	;10 011
+FC_MMU_CODE	equ	%100	;10 100
+FC_SUPER_DATA	equ	%101	;00 101
+FC_SUPER_CODE	equ	%110	;00 110
+;		equ	%111	;10 111
+
+PUSH_SFC_DFC	.macro	Dn
+	movec.l	dfc,Dn
+	move.l	Dn,-(sp)
+	movec.l	sfc,Dn
+	move.l	Dn,-(sp)
+	.endm
+
+MMU_SFC_DFC	.macro	Dn
+	moveq.l	#FC_MMU_DATA,Dn
+	movec.l	Dn,sfc
+	movec.l	Dn,dfc
+	.endm
+
+PUSH_MMU_SFC_DFC	.macro	Dn
+	PUSH_SFC_DFC	Dn
+	MMU_SFC_DFC	Dn
+	.endm
+
+POP_SFC_DFC	.macro	Dn
+	move.l	(sp)+,Dn
+	movec.l	Dn,sfc
+	move.l	(sp)+,Dn
+	movec.l	Dn,dfc
+	.endm
+
+;Cache Mode
+CM_WRITETROUGH	equ	%00	;Writethrough, cachable
+CM_COPYBACK	equ	%01	;Copyback, cachable
+CM_PRECISE	equ	%10	;Cache-inhibited, precise exception model
+CM_IMPRECISE	equ	%11	;Cache-inhibited, imprecise exception model
+
+;Root/Pointer Descriptor
+RPD_ADR_BIT	equ	9	;Pointer/Page Table Address
+RPD_U_BIT	equ	3	;Used
+RPD_W_BIT	equ	2	;Write Protected
+RPD_UDT_BIT	equ	0	;Upper Level Descriptor Type
+;			      TABLE ADDRESS            U W UDT
+RPD_ADR_MASK	equ	%11111111111111111111111_00000_0_0_00
+RPD_U		equ	%00000000000000000000000_00000_1_0_00
+RPD_W		equ	%00000000000000000000000_00000_0_1_00
+RPD_UDT_MASK	equ	%00000000000000000000000_00000_0_0_11
+RPD_UDT_INVALID	equ	%00000000000000000000000_00000_0_0_00
+RPD_UDT_RESIDENT equ	%00000000000000000000000_00000_0_0_11
+
+;Page Descriptor
+PD_8ADR_BIT	equ	13	;Physical Address
+PD_4ADR_BIT	equ	12	;Physical Address
+PD_UR_BIT	equ	11	;User Reserved
+PD_G_BIT	equ	10	;Global
+PD_U1_BIT	equ	9	;User Page Attributes
+PD_U0_BIT	equ	8	;User Page Attributes
+PD_U1U0_BIT	equ	8	;User Page Attributes
+PD_S_BIT	equ	7	;Supervisor Protected
+PD_CM_BIT	equ	5	;Cache Mode
+PD_M_BIT	equ	4	;Modified
+PD_U_BIT	equ	3	;Used
+PD_W_BIT	equ	2	;Write Protected
+PD_PDT_BIT	equ	0	;Page Descriptor Type
+;				   PHYSICAL ADDRESS  UR G U1U0 S CM M U W PDT
+PD_8ADR_MASK		equ	%1111111111111111111_00_0__00__0_00_0_0_0_00
+PD_4ADR_MASK		equ	%11111111111111111111_0_0__00__0_00_0_0_0_00
+PD_8UR_MASK		equ	%0000000000000000000_11_0__00__0_00_0_0_0_00
+PD_4UR			equ	%00000000000000000000_1_0__00__0_00_0_0_0_00
+PD_G			equ	%00000000000000000000_0_1__00__0_00_0_0_0_00
+PD_U1U0_MASK		equ	%00000000000000000000_0_0__11__0_00_0_0_0_00
+PD_U1			equ	%00000000000000000000_0_0__10__0_00_0_0_0_00
+PD_U0			equ	%00000000000000000000_0_0__01__0_00_0_0_0_00
+PD_S			equ	%00000000000000000000_0_0__00__1_00_0_0_0_00
+PD_CM_MASK		equ	%00000000000000000000_0_0__00__0_11_0_0_0_00
+PD_CM_WRITETROUGH	equ	%00000000000000000000_0_0__00__0_00_0_0_0_00
+PD_CM_COPYBACK		equ	%00000000000000000000_0_0__00__0_01_0_0_0_00
+PD_CM_PRECISE		equ	%00000000000000000000_0_0__00__0_10_0_0_0_00
+PD_CM_IMPRECISE		equ	%00000000000000000000_0_0__00__0_11_0_0_0_00
+PD_M			equ	%00000000000000000000_0_0__00__0_00_1_0_0_00
+PD_U			equ	%00000000000000000000_0_0__00__0_00_0_1_0_00
+PD_W			equ	%00000000000000000000_0_0__00__0_00_0_0_1_00
+PD_PDT_MASK		equ	%00000000000000000000_0_0__00__0_00_0_0_0_11
+PD_PDT_INVALID		equ	%00000000000000000000_0_0__00__0_00_0_0_0_00
+PD_PDT_INDIRECT		equ	%00000000000000000000_0_0__00__0_00_0_0_0_10
+PD_PDT_RESIDENT		equ	%00000000000000000000_0_0__00__0_00_0_0_0_11
+
+
+;----------------------------------------------------------------
+;
+;	FSLW
+;
+;----------------------------------------------------------------
+;FSLW
+;     27  25 2423 2221 2019 181716 15 14  13  12  11  10  9  8  7  6   5  4  3   2   0
+;     MA  LK  RW  SIZE  TT    TM   IO PBE SBE PTA PTB IL PF SP WP TWE RE WE TTR BPE SEE
+;%0000_0_0_0__00___00___00____000___0__0___0___0___0___0__0__0__0__0___0__0__0___0_0_0
+
+FSLW_MA_BIT		equ	27
+FSLW_LK_BIT		equ	25
+FSLW_RW_BIT		equ	23
+FSLW_SIZE_BIT		equ	21
+FSLW_TT_BIT		equ	19
+FSLW_TM_BIT		equ	16
+FSLW_IO_BIT		equ	15
+FSLW_PBE_BIT		equ	14
+FSLW_SBE_BIT		equ	13
+FSLW_PTA_BIT		equ	12
+FSLW_PTB_BIT		equ	11
+FSLW_IL_BIT		equ	10
+FSLW_PL_BIT		equ	9
+FSLW_SP_BIT		equ	8
+FSLW_WP_BIT		equ	7
+FSLW_TWE_BIT		equ	6
+FSLW_RE_BIT		equ	5
+FSLW_WE_BIT		equ	4
+FSLW_TTR_BIT		equ	3
+FSLW_BPE_BIT		equ	2
+FSLW_SEE_BIT		equ	0
+
+;----------------------------------------------------------------
+;
+;	アドレス変換
+;
+;----------------------------------------------------------------
+
+;デスクリプタの領域のサイズ
+MINIMUM_DESC_SIZE_0	equ	10*1024
+MINIMUM_DESC_SIZE_16	equ	19*1024
+MINIMUM_DESC_SIZE_32	equ	27*1024
+MINIMUM_DESC_SIZE_64	equ	44*1024
+MINIMUM_DESC_SIZE_128	equ	78*1024
+MINIMUM_DESC_SIZE_256	equ	146*1024
+MINIMUM_DESC_SIZE_384	equ	214*1024
+MINIMUM_DESC_SIZE_512	equ	282*1024
+MINIMUM_DESC_SIZE_768	equ	418*1024
+
+DEFAULT_DESC_SIZE_0	equ	32*1024
+DEFAULT_DESC_SIZE_16	equ	48*1024
+DEFAULT_DESC_SIZE_32	equ	64*1024
+DEFAULT_DESC_SIZE_64	equ	96*1024
+DEFAULT_DESC_SIZE_128	equ	160*1024
+DEFAULT_DESC_SIZE_256	equ	320*1024
+DEFAULT_DESC_SIZE_384	equ	480*1024
+DEFAULT_DESC_SIZE_512	equ	640*1024
+DEFAULT_DESC_SIZE_768	equ	960*1024
+
+;----------------------------------------------------------------
+;
+;	ローカルメモリ
+;
+;----------------------------------------------------------------
+
+;LOCAL_MEMORY_BASE	equ	$10000000	;ローカルメモリのベースアドレス
+;						;	$10000000
+
+DEFAULT_JOIN_SIZE	equ	2048-16		;結合ブロックのサイズ(2048バイト)
+
+
+;----------------------------------------------------------------
+;
+;	RAMDISKドライバ
+;
+;----------------------------------------------------------------
+
+MAXIMUM_UNIT	equ	16	;最大ユニット数
+DEFAULT_SIZE	equ	1024*2	;標準セクタ数(2MB)
+MINIMUM_SIZE	equ	16	;最小セクタ数(16KB)
+MAXIMUM_SIZE	equ	1024*768	;最大セクタ数(768MB)
+ROOT_ENTRY	equ	512	;ルートディレクトリのエントリ数
+
+
+;----------------------------------------------------------------
+;
+;	デバイスドライバのパッチ
+;
+;----------------------------------------------------------------
+
+DEFAULT_BUFFER_SIZE	equ	PAGE_OFFSET_SIZE*8	;デバイス転送バッファのサイズ
+				;(必ずページサイズの倍数にすること)
+
+
+;----------------------------------------------------------------
+;
+;	ADPCM関係のIOCSコール
+;
+;----------------------------------------------------------------
+
+ADPCM_SPLIT_SIZE	equ	1024	;ADPCM転送の分割サイズ(ページの半分以下,16の倍数)
+
+
+;----------------------------------------------------------------
+;
+;	ファイル情報
+;
+;----------------------------------------------------------------
+
+DEFAULT_FILE_INFO_SIZE	equ	32*1024	;ファイル情報の領域(ヒープ管理)のサイズ
+FILE_INFO_HANDLES	equ	256	;ファイル情報の領域(ヒープ管理)の初期ハンドル数
+
+
+;----------------------------------------------------------------
+;
+;	各種テーブル
+;
+;----------------------------------------------------------------
+;----------------------------------------------------------------
+;デバイスヘッダ
+	.offset	0
+dhNext:		.ds.l	1	;次のデバイスドライバへのポインタ(-1=終わり)
+dhType:		.ds.w	1	;デバイスタイプ
+dhStrategy:	.ds.l	1	;ストラテジルーチンのエントリポイント
+dhInterrupt:	.ds.l	1	;割り込みルーチンのエントリポイント
+dhName:		.ds.b	8	;デバイス名
+;(22バイト)
+	.text
+
+;----------------------------------------------------------------
+;ドライブ管理テーブル
+	.offset	0
+dDriveName:	.ds.b	2	;起動時の内部ドライブ名
+				;仮想ドライブのとき→実体のドライブの内部ドライブ名
+				;仮想ディレクトリの実体のドライブのとき→仮想ディレクトリの内部ドライブ名
+dCurrentPath:	.ds.b	67	;カレントパス(前後と区切りは$09)
+				;仮想ドライブのとき→実体のドライブのディレクトリ名
+				;仮想ディレクトリの実体のドライブのとき→仮想ディレクトリのディレクトリ名
+dAssignMode:	.ds.b	1	;_ASSIGNのモード
+				;$40=通常,$50=仮想ドライブ,$60=仮想ディレクトリの実体のドライブ
+dInnerDpbPtr:	.ds.l	1	;内部DPBテーブルへのポインタ
+dCurrentPos:	.ds.w	1	;カレントディレクトリのクラスタ番号(0=ルートディレクトリ)
+dPathLength:	.ds.w	1	;ドライブ名+パスの長さ-1
+;(78バイト)
+dSize:
+	.text
+
+;----------------------------------------------------------------
+;内部DPBテーブル
+	.offset	0
+iDrive:		.ds.b	1	;起動時の内部ドライブ番号(0=A:)
+iUnit:		.ds.b	1	;ユニット番号
+iDeviceHeader:	.ds.l	1	;デバイスヘッダのアドレス
+iNext:		.ds.l	1	;次の内部DPBテーブル(-1=終わり)
+iBytePerSect:	.ds.w	1	;1セクタあたりのバイト数(0=特殊デバイスドライバ)
+;(12バイト)
+;(以下は特殊デバイスドライバには存在しない)
+iSectPerCrust:	.ds.b	1	;1クラスタあたりのセクタ数-1
+iSectPerCrust2:	.ds.b	1	;クラスタ数をセクタ数に変換するときのシフトカウント
+				;bit7=1のとき2バイトFATの上下のバイトを入れ換える
+iFatStart:	.ds.w	1	;FATの先頭セクタ番号
+iHowManyFat:	.ds.b	1	;FAT領域の個数
+iSectorPerFat:	.ds.b	1	;1個のFAT領域に使用するセクタ数
+iRootEntries	.ds.w	1	;ルートディレクトリに入るエントリ数
+iDataStart:	.ds.w	1	;データ部の先頭セクタ番号
+iTotalCrust:	.ds.w	1	;総クラスタ数+1
+iRootStart:	.ds.w	1	;ルートディレクトリの先頭セクタ番号
+iMediaByte:	.ds.b	1	;メディアバイト
+iBytePerSect2:	.ds.b	1	;セクタ数をバイト数に変換するときのシフトカウント
+iSeFatStart:	.ds.w	1	;FAT検索の先頭セクタ番号
+;(30バイト)
+;(以下はdirsch=onのとき_FILES,_NFILES以外で使う)
+iChDirStart:	.ds.l	1	;直前に変更したエントリがあるディレクトリの先頭のセクタ番号
+iChDirCount:	.ds.w	1	;直前に変更したエントリがあるディレクトリの先頭から連続しているセクタ数-1
+iChEntStart:	.ds.l	1	;直前に変更したエントリがあるセクタ番号
+iChEntCount:	.ds.w	1	;直前に変更したエントリがあるセクタから連続しているセクタ数-1
+iSeDirStart:	.ds.l	1	;直前に検索したエントリがあるディレクトリの先頭のセクタ番号
+iSeDirCount:	.ds.w	1	;直前に検索したエントリがあるディレクトリの先頭から連続しているセクタ数-1
+iSeEntStart:	.ds.l	1	;直前に検索したエントリがあるセクタ番号
+iSeEntCount:	.ds.w	1	;直前に検索したエントリがあるセクタから連続しているセクタ数-1
+iSeEntOffset:	.ds.w	1	;直前に検索したエントリのセクタ先頭からのオフセット
+;(56バイト)
+	.text
+
+;----------------------------------------------------------------
+;メモリ管理テーブル(ブロックのヘッダ)
+;	オフセットはブロックのヘッダの先頭を0とする
+	.offset	0
+Prev:	.ds.l	1	;直前のブロックのヘッダ(0=リストの先頭)
+Proc:	.ds.l	1	;このブロックを確保したプロセスのメモリ管理テーブル
+			;最上位バイト
+			;	%000xxxxx	通常のメモリブロック
+			;	%110xxxxx	サブのメモリ管理の親または先頭
+			;	%111xxxxx	常駐プロセス
+Tail:	.ds.l	1	;ユーザ領域の末尾+1
+			;(16バイトアラインメントなし,フリーブロックはヘッダの先頭+16)
+			;最上位バイト
+			;	%0xxxxxxx	ロックされていない
+			;	%1xxxxxxx	ロックされている
+Next:	.ds.l	1	;直後のブロックのヘッダ(0=リストの末尾)
+User:			;ユーザ領域の先頭
+	.text
+
+;----------------------------------------------------------------
+;プロセス管理テーブル
+;	オフセットはメモリ空間の先頭を0とする
+	.offset	16
+pEnvPtr:	.ds.l	1	;$0010 環境の領域のアドレス
+pExitvc:	.ds.l	1	;$0014 _EXITVCのベクタ
+pCtrlvc:	.ds.l	1	;$0018 _CTRLVCのベクタ
+pErrjvc:	.ds.l	1	;$001C _ERRJVCのベクタ
+pCmdLinePtr:	.ds.l	1	;$0020 コマンドラインのアドレス
+pHandler:	.ds.b	12	;$0024 ハンドラの使用状況
+pBssTop:	.ds.l	1	;$0030 bssの先頭
+pHeapTop:	.ds.l	1	;$0034 ヒープの先頭
+pStackTop:	.ds.l	1	;$0038 スタックエリアの先頭
+pUsp:		.ds.l	1	;$003C usp
+pSsp:		.ds.l	1	;$0040 ssp
+p_Sr:		.ds.w	1	;$0044 sr
+pAbortSr:	.ds.w	1	;$0046 アボート時のsr
+pAbortSsp:	.ds.l	1	;$0048 アボート時のssp
+pTrap10:	.ds.l	1	;$004C TRAP#10のベクタ
+pTrap11:	.ds.l	1	;$0050 TRAP#11のベクタ
+pTrap12:	.ds.l	1	;$0054 TRAP#12のベクタ
+pTrap13:	.ds.l	1	;$0058 TRAP#13のベクタ
+pTrap14:	.ds.l	1	;$005C TRAP#14のベクタ
+pOsFlag:	.ds.l	1	;$0060 OSフラグ(-1=Humanが起動,0=その他)
+pModuleNumber:	.ds.b	1	;$0064 モジュール番号
+		.ds.b	3	;$0065 未使用
+pChildPtr:	.ds.l	1	;$0068 子プロセスのメモリ管理テーブル
+pDeviceNoPush:	.ds.b	1	;$006C デバイス呼び出しのときキャッシュプッシュするか
+				;	0	-npの指定に関わらずプッシュする
+				;	-1	-npが指定されていたらプッシュしない
+pAllocArea:	.ds.b	1	;$006D アロケートできる領域の条件
+				;	0	下位のみ
+				;	1	上位のみ
+				;	2	親と同じ側のみ
+				;	3	親と反対側のみ
+				;	4	制限なし,下位優先
+				;	5	制限なし,上位優先
+				;	6	制限なし,親と同じ側優先
+				;	7	制限なし,親と反対側優先
+				;	8	制限なし,優先なし
+pLoadCache:	.ds.b	1	;$006E (本体のメモリブロックのキャッシュモード)
+pAllocCache:	.ds.b	1	;$006F (アロケートしたメモリブロックのキャッシュモード(w or c))
+		.ds.l	1	;$0070 (使用中のメモリブロックのユーザ領域の合計サイズ)
+		.ds.l	1	;$0074 (使用中のメモリブロックのユーザ領域の合計サイズの最大値)
+		.ds.l	1	;$0078 (本体のメモリブロックのユーザ領域のサイズの最大値)
+		.ds.l	1	;$007C (アロケートできるメモリブロックのユーザ領域のサイズの最大値)
+pPath:		.ds.b	68	;$0080 実行ファイルのパス
+pName:		.ds.b	24	;$00C4 実行ファイルのファイル名
+		.ds.l	9	;$00DC 予約
+;(240バイト)
+pSize:
+pProgram:
+	.text
+
+;----------------------------------------------------------------
+;_NAMESTS形式のファイル名
+	.offset	0
+nFlag:		.ds.b	1		;フラグ
+nDrive:		.ds.b	1		;内部ドライブ番号(0=A:)
+nPath:		.ds.b	65		;パス(前後と区切りは$09または'\')
+nName1:		.ds.b	8		;ファイル名1(残りは$20)
+nExt:		.ds.b	3		;拡張子(残りは$20)
+nName2:		.ds.b	10		;ファイル名2(残りは0)
+;(88バイト)
+nSize:
+	.text
+
+;----------------------------------------------------------------
+;_NAMECKのバッファ
+	.offset	0
+ncDrive:	.ds.b	2	;'A:'		ドライブ名
+ncPath:		.ds.b	65	;'\dir\',0	パス
+ncName:		.ds.b	19	;'file',0	ファイル名
+ncExt:		.ds.b	5	;'.ext',0	拡張子
+;(91バイト)
+	.even
+ncSize:
+	.text
+
+;----------------------------------------------------------------
+;_FILES,_NFILESのバッファ
+;fSys～は環境によって異なるので使わないこと
+;fLong～はバッファアドレスのbit31を1にしたとき有効
+	.offset	0
+fSysAttribute:	.ds.b	1	;検索する属性
+fSysDrive:	.ds.b	1	;検索する内部ドライブ番号(0=A:)
+fSysSector:	.ds.l	1	;エントリがあるセクタ番号
+fSysConnect:	.ds.w	1	;連続しているセクタ数-1
+fSysOffset:	.ds.w	1	;セクタ先頭からのオフセット
+				;($FFFF=該当するファイルがもうない)
+fSysName:	.ds.b	8	;検索するファイル名
+fSysExt:	.ds.b	3	;検索する拡張子
+fAttribute:	.ds.b	1	;属性
+fTime:		.ds.w	1	;時刻
+fDate:		.ds.w	1	;日付
+fLength:	.ds.l	1	;ファイルサイズ
+fName:		.ds.b	23	;ファイル名
+fSize		equ	((*)+1).and.-2
+fLongDrive:	.ds.b	2	;内部ドライブ名(A:～)
+fLongPath:	.ds.b	65	;パス(区切りは'\')
+fLongName1:	.ds.b	8	;ファイル名1(残りは$20または'?')
+fLongExt:	.ds.b	3	;拡張子(残りは$20または'?')
+fLongName2:	.ds.b	10	;ファイル名2(残りは0)
+fLongSize	equ	((*)+1).and.-2
+	.text
+
+;----------------------------------------------------------------
+;スレッド管理テーブル
+	.offset	0
+tNext:		.ds.l	1	;次のスレッド管理テーブルのアドレス
+tFlag:		.ds.b	1	;ウェイトフラグ(-2=強制スリープ状態,-1=スリープ状態,0=実行中)
+tCount:		.ds.b	1	;カウンタ
+tNice:		.ds.b	1	;最大カウント(優先レベル)
+tDosCall:	.ds.b	1	;実行中の(レベル0で入った)DOSコール番号
+tProcess:	.ds.l	1	;実行中のプロセスのメモリ管理テーブル
+tRegs:
+tRegUsp:	.ds.l	1	;usp
+tRegD0:		.ds.l	1	;d0
+tRegD1:		.ds.l	1	;d1
+tRegD2:		.ds.l	1	;d2
+tRegD3:		.ds.l	1	;d3
+tRegD4:		.ds.l	1	;d4
+tRegD5:		.ds.l	1	;d5
+tRegD6:		.ds.l	1	;d6
+tRegD7:		.ds.l	1	;d7
+tRegA0:		.ds.l	1	;a0
+tRegA1:		.ds.l	1	;a1
+tRegA2:		.ds.l	1	;a2
+tRegA3:		.ds.l	1	;a3
+tRegA4:		.ds.l	1	;a4
+tRegA5:		.ds.l	1	;a5
+tRegA6:		.ds.l	1	;a6
+tRegSr:		.ds.w	1	;sr
+tRegPc:		.ds.l	1	;pc
+tRegSsp:	.ds.l	1	;ssp
+tDosLevel:	.ds.w	1	;DOSコールのレベル
+tDosSp:		.ds.l	1	;DOSコールにレベル0で入ったときのsp
+tCBuffer:	.ds.l	1	;スレッド間通信バッファのアドレス
+tThreadName:	.ds.b	16	;スレッド名
+tWaitTime:	.ds.l	1	;ウェイトタイム
+;(以下は_GET_PRでコピーされない)
+tMemStart:	.ds.l	1	;_MALLOCできるメモリ空間の先頭アドレス
+tMemEnd:	.ds.l	1	;_MALLOCできるメモリ空間の末尾アドレス+1
+;(124バイト)
+tSize:
+	.text
+
+;----------------------------------------------------------------
+;スレッドの排他制御情報
+;	順序などに依存しているので無闇に変更しないこと
+	.offset	0
+xFsave:		.ds.x	1	;FPUの内部状態
+xFpcr:		.ds.l	1	;fpcr
+xFpsr:		.ds.l	1	;fpsr
+xFpiar:		.ds.l	1	;fpiar
+xFp0:		.ds.x	1	;fp0
+xFp1:		.ds.x	1	;fp1
+xFp2:		.ds.x	1	;fp2
+xFp3:		.ds.x	1	;fp3
+xFp4:		.ds.x	1	;fp4
+xFp5:		.ds.x	1	;fp5
+xFp6:		.ds.x	1	;fp6
+xFp7:		.ds.x	1	;fp7
+;120
+;標準ハンドラの排他制御情報が-1のときはハンドラ不足なので,
+;メインスレッドの排他制御情報を使う
+xStdin:		.ds.w	1	;標準入力ハンドラ
+xStdout:	.ds.w	1	;標準出力ハンドラ
+xStderr:	.ds.w	1	;標準エラー入出力ハンドラ
+xStdaux:	.ds.w	1	;標準シリアル入出力ハンドラ
+xStdprn:	.ds.w	1	;標準プリンタ出力ハンドラ
+;130
+xDup0Table:	.ds.w	5	;標準ハンドラのハンドラ番号変換テーブル
+;140
+xDriveTablePtr:	.ds.l	1	;ドライブ管理テーブルの先頭([$1C38.w].l)
+;144
+xCurrentDrive:	.ds.b	1	;カレントドライブ番号([$1C15.w].b)
+;145
+xBreakMode:	.ds.b	1	;breakのモード([$1C12.w].b)
+		.even
+;146
+;排他制御情報のサイズ(ドライブ管理テーブルを伴わない場合)
+xSize:
+xDriveTable:	.ds.b	dSize*26	;ドライブ管理テーブル(2028バイト)
+;2174
+		.align	16
+;2176
+;排他制御情報のサイズ(ドライブ管理テーブルを伴う場合)
+xSize2:
+	.text
+
+;----------------------------------------------------------------
+;DOSコールにレベル0で入ったときのssp([$1C5C].l)からのオフセット
+	.offset	0
+dosD1:		.ds.l	1	;$0000	d1
+dosD2:		.ds.l	1	;$0004	d2
+dosD3:		.ds.l	1	;$0008	d3
+dosD4:		.ds.l	1	;$000C	d4
+dosD5:		.ds.l	1	;$0010	d5
+dosD6:		.ds.l	1	;$0014	d6
+dosD7:		.ds.l	1	;$0018	d7
+dosA0:		.ds.l	1	;$001C	a0
+dosA1:		.ds.l	1	;$0020	a1
+dosA2:		.ds.l	1	;$0024	a2
+dosA3:		.ds.l	1	;$0028	a3
+dosA4:		.ds.l	1	;$002C	a4
+dosA5:		.ds.l	1	;$0030	a5
+dosA6:		.ds.l	1	;$0034	a6
+dosSR:		.ds.w	1	;$0038	sr
+dosPC:		.ds.l	1	;$003A	pc
+dosFormat:	.ds.w	1	;$003E	format
+dosSSP:				;$0040
+	.even
+dosSize:
+	.text
+
+;----------------------------------------------------------------
+;
+;	ヒープ
+;
+;----------------------------------------------------------------
+;ヘッダ
+	.offset	0
+hpHeaderMark:	.ds.l	1	;'060T'
+		.ds.l	1	;'HEAP'
+hpHeadHdl:	.ds.l	1	;ヒープの先頭のハンドル(1番目のハンドル,ヘッダとハンドルテーブル)
+hpTailHdl:	.ds.l	1	;ヒープの末尾のハンドル(2番目のハンドル,番兵,長さ=0)
+hpFreeHdl:	.ds.l	1	;フリーハンドルリストの先頭
+hpIncrease:	.ds.l	1	;ハンドルが不足したとき1度に増加させるハンドル数
+		.ds.l	2	;予備
+hpHeaderSize:			;ヒープのヘッダのサイズは32バイトに固定
+hpHandleStart:			;ハンドルテーブルの先頭
+	.text
+;ハンドル
+;全領域再配置可能,フラグは存在しない
+	.offset	0
+hdPtr:		.ds.l	1	;実体へのポインタ(16の倍数,0=フリーハンドル)
+hdLength:	.ds.l	1	;使用中の長さ(0=末尾)
+hdPrev:		.ds.l	1	;実体の直前にあるレコードへのハンドル(16の倍数,0=先頭)
+				;フリーハンドルのときは無効
+hdNext:		.ds.l	1	;実体の直後にあるレコードへのハンドル(16の倍数,0=末尾)
+				;フリーハンドルのときは,
+				;次のフリーハンドルへのポインタ(16の倍数,0=末尾)
+hdSize:				;ハンドルのサイズは16バイトに固定
+	.text
+
+;----------------------------------------------------------------
+;ファイル情報レコード
+	.offset	0
+fiType:		.ds.b	1	;このレコードのタイプ
+				;	0	ファイル情報
+				;	1	チェックデータ
+				;	2	チェックルーチン
+				;	3	パッチデータ
+				;	4	パッチルーチン
+		.ds.b	3	;予備
+fiData:				;+$04
+fiName:		.ds.b	23	;ファイル名の条件(パスは含まない,拡張子は含む)
+fiCheckCaps:	.ds.b	1	;ファイル名の大文字と小文字の区別(0=しない,-1=する)
+fiAttribute:	.ds.b	1	;属性の条件(-1=条件なし,負数でも-1以外は条件が有効)
+	.even
+fiDateTime:
+fiDate:		.ds.w	1	;日付の条件(-1=条件なし,負数でも-1以外は条件が有効)
+fiTime:		.ds.w	1	;時刻の条件(-1=条件なし,負数でも-1以外は条件が有効)
+fiLength:	.ds.l	1	;ファイルサイズの条件(-1=条件なし)
+fiCheckHdl:	.ds.l	1	;チェックデータへのハンドル(0=チェックデータなし)
+fiCheckCodeHdl:	.ds.l	1	;チェックルーチンへのハンドル(0=チェックルーチンなし)
+fiHashNumber:	.ds.w	1	;ハッシュ関数値(大文字と小文字を区別しない)
+fiHashNextHdl:	.ds.l	1	;同じハッシュ関数値を持つ次のレコードへのハンドル
+fiPatchHdl:	.ds.l	1	;パッチデータへのハンドル(0=パッチデータなし)
+fiPatchCodeHdl:	.ds.l	1	;パッチルーチンへのハンドル(0=パッチルーチンなし)
+fiLoadArea:	.ds.b	1	;ロード領域の指定
+fiAllocArea:	.ds.b	1	;アロケート領域の指定
+fiLoadCache:	.ds.b	1	;ロード領域のキャッシュモード
+fiAllocCache:	.ds.b	1	;アロケート領域のキャッシュモード
+	.align	4
+fiSize:
+	.text
+
+;----------------------------------------------------------------
+;MFP割り込みベクタ
+RTC1HZ	equ	$0100
+EXPWOF	equ	$0104
+PWOF	equ	$0108
+FMINT	equ	$010C
+TIMERD	equ	$0110
+TIMERC	equ	$0114
+VDISP	equ	$0118
+RTCCLK	equ	$011C
+TIMERB	equ	$0120
+UTE	equ	$0124
+UTBE	equ	$0128
+URE	equ	$012C
+URF	equ	$0130
+TIMERA	equ	$0134
+CRTCIRQ	equ	$0138
+HSYNC	equ	$013C
+
+;----------------------------------------------------------------
+;DMAC割り込みベクタ
+DMAC3NIV	equ	$01A8
+DMAC3EIV	equ	$01AC
+
+;----------------------------------------------------------------
+;MFPレジスタ
+GPIPDR	equ	$00E88001
+AER	equ	$00E88003
+DDR	equ	$00E88005
+IERA	equ	$00E88007
+IERB	equ	$00E88009
+IPRA	equ	$00E8800B
+IPRB	equ	$00E8800D
+ISRA	equ	$00E8800F
+ISRB	equ	$00E88011
+IMRA	equ	$00E88013
+IMRB	equ	$00E88015
+VECTR	equ	$00E88017
+TACR	equ	$00E88019
+TBCR	equ	$00E8801B
+TCDCR	equ	$00E8801D
+TADR	equ	$00E8801F
+TBDR	equ	$00E88021
+TCDR	equ	$00E88023
+TDDR	equ	$00E88025
+SCR	equ	$00E88027
+UCR	equ	$00E88029
+RSR	equ	$00E8802B
+TSR	equ	$00E8802D
+UDR	equ	$00E8802F
+
+;----------------------------------------------------------------
+;DMACレジスタ
+DMAC2	equ	$00E84080
+CSR2	equ	$00E84080
+CER2	equ	$00E84081
+DCR2	equ	$00E84084
+OCR2	equ	$00E84085
+SCR2	equ	$00E84086
+CCR2	equ	$00E84087
+MTC2	equ	$00E8408A
+MAR2	equ	$00E8408C
+DAR2	equ	$00E84094
+BTC2	equ	$00E8409A
+BAR2	equ	$00E8409C
+NIV2	equ	$00E840A5
+EIV2	equ	$00E840A7
+MFC2	equ	$00E840A9
+CPR2	equ	$00E840AD
+DFC2	equ	$00E840B1
+BFC2	equ	$00E840B9
+
+DMAC3	equ	$00E840C0
+CSR3	equ	$00E840C0
+CER3	equ	$00E840C1
+DCR3	equ	$00E840C4
+OCR3	equ	$00E840C5
+SCR3	equ	$00E840C6
+CCR3	equ	$00E840C7
+MTC3	equ	$00E840CA
+MAR3	equ	$00E840CC
+DAR3	equ	$00E840D4
+BTC3	equ	$00E840DA
+BAR3	equ	$00E840DC
+NIV3	equ	$00E840E5
+EIV3	equ	$00E840E7
+MFC3	equ	$00E840E9
+CPR3	equ	$00E840ED
+DFC3	equ	$00E840F1
+BFC3	equ	$00E840F9
+
+	.list

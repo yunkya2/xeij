@@ -1,0 +1,101 @@
+	.nlist
+  .ifndef __vicon_equ__
+__vicon_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	ビデオコントローラ
+;
+;----------------------------------------------------------------
+
+VICON_GPALET		equ	$00E82000	;.w[256] グラフィックパレット
+;16色
+;	カラーコードが16個並んでいる
+;	          +0 +1 +2 +3 +4 +5 +6 +7 +8 +9 +A +B +C +D +E +F
+;	00E82000  H0 L0 H1 L1 H2 L2 H3 L3 H4 L4 H5 L5 H6 L6 H7 L7
+;	00E82010  H8 L8 H9 L9 HA LA HB LB HC LC HD LD HE LE HF LF
+;256色
+;	カラーコードが256個並んでいる
+;	           +0  +1  +2  +3  +4  +5  +6  +7  +8  +9  +A  +B  +C  +D  +E  +F
+;	00E82000  H00 L00 H01 L01 H02 L02 H03 L03 H04 L04 H05 L05 H06 L06 H07 L07
+;	00E82010  H08 L08 H09 L09 H0A L0A H0B L0B H0C L0C H0D L0D H0E L0E H0F L0F
+;	00E82020  H10 L10 H11 L11 H12 L12 H13 L13 H14 L14 H15 L15 H16 L16 H17 L17
+;	00E82030  H18 L18 H19 L19 H1A L1A H1B L1B H1C L1C H1D L1D H1E L1E H1F L1F
+;	    :
+;	00E820C0  HE0 LE0 HE1 LE1 HE2 LE2 HE3 LE3 HE4 LE4 HE5 LE5 HE6 LE6 HE7 LE7
+;	00E820D0  HE8 LE8 HE9 LE9 HEA LEA HEB LEB HEC LEC HED LED HEE LEE HEF LEF
+;	00E820E0  HF0 LF0 HF1 LF1 HF2 LF2 HF3 LF3 HF4 LF4 HF5 LF5 HF6 LF6 HF7 LF7
+;	00E820F0  HF8 LF8 HF9 LF9 HFA LFA HFB LFB HFC LFC HFD LFD HFE LFE HFF LFF
+;65536色
+;	65536色のときは上位バイトと下位バイトが独立して変換される
+;	グラフィック画面の全体に特定の色を足すまたは引くことができるが、赤成分が上位と下位に分かれるため滑らかではない
+;	緑と青を入れ替えるような変換はできない
+;	            +0    +1    +2    +3    +4    +5    +6    +7    +8    +9    +A    +B    +C    +D    +E    +F
+;	00E82000  Lxx00 Lxx01 H00xx H01xx Lxx02 Lxx03 H02xx H03xx Lxx04 Lxx05 H04xx H05xx Lxx06 Lxx07 H06xx H07xx
+;	00E82010  Lxx08 Lxx09 H08xx H09xx Lxx0A Lxx0B H0Axx H0Bxx Lxx0C Lxx0D H0Cxx H0Dxx Lxx0E Lxx0F H0Exx H0Fxx
+;	00E82020  Lxx10 Lxx11 H10xx H11xx Lxx12 Lxx13 H12xx H13xx Lxx14 Lxx15 H14xx H15xx Lxx16 Lxx17 H16xx H17xx
+;	00E82030  Lxx18 Lxx19 H18xx H19xx Lxx1A Lxx1B H1Axx H1Bxx Lxx1C Lxx1D H1Cxx H1Dxx Lxx1E Lxx1F H1Exx H1Fxx
+;	    :
+;	00E821C0  LxxE0 LxxE1 HE0xx HE1xx LxxE2 LxxE3 HE2xx HE3xx LxxE4 LxxE5 HE4xx HE5xx LxxE6 LxxE7 HE6xx HE7xx
+;	00E821D0  LxxE8 LxxE9 HE8xx HE9xx LxxEA LxxEB HEAxx HEBxx LxxEC LxxED HECxx HEDxx LxxEE LxxEF HEExx HEFxx
+;	00E821E0  LxxF0 LxxF1 HF0xx HF1xx LxxF2 LxxF3 HF2xx HF3xx LxxF4 LxxF5 HF4xx HF5xx LxxF6 LxxF7 HF6xx HF7xx
+;	00E821F0  LxxF8 LxxF9 HF8xx HF9xx LxxFA LxxFB HFAxx HFBxx LxxFC LxxFD HFCxx HFDxx LxxFE LxxFF HFExx HFFxx
+
+VICON_TSPALET		equ	$00E82200	;.w[256] テキストスプライトパレット
+;			equ	$00E82200	;.w[16] テキストパレット
+;			equ	$00E82220	;.w[240] スプライトパレット
+
+VICON_MEMORY_MODE	equ	$00E82400	;.w メモリモード。-----|1024ドット|65536色|16色/256色
+
+VICON_PRIORITY		equ	$00E82500	;.w 優先順位。--|SP##|TX##|GR##|G3##|G2##|G1##|G0##
+VICON_SPPR_BIT		equ	12		;スプライト画面の優先順位。0～3
+VICON_TXPR_BIT		equ	10		;テキスト画面の優先順位。0～3。テキスト画面の優先順位<=スプライト画面の優先順位のときテキスト画面が手前
+VICON_GRPR_BIT		equ	8		;グラフィック画面の優先順位。テキスト画面とスプライト画面に対して0=手前,1=間,2=奥,3=単独
+VICON_G4TH_BIT		equ	6		;16色の4番目、256色の2番目のbit7-4、65536色のbit15-12、1024ドットの右下の4bitページ番号
+VICON_G3RD_BIT		equ	4		;16色の3番目、256色の2番目のbit3-0、65536色のbit11-8、1024ドットの左下の4bitページ番号
+VICON_G2ND_BIT		equ	2		;16色の2番目、256色の1番目のbit7-4、65536色のbit7-4、1024ドットの右上の4bitページ番号
+VICON_G1ST_BIT		equ	0		;16色の1番目、256色の1番目のbit3-0、65536色のbit3-0、1024ドットの左上の4bitページ番号
+VICON_SPPR_MASK		equ	3<<VICON_SPPR_BIT
+VICON_TXPR_MASK		equ	3<<VICON_TXPR_BIT
+VICON_GRPR_MASK		equ	3<<VICON_GRPR_BIT
+VICON_G4TH_MASK		equ	3<<VICON_G4TH_BIT
+VICON_G3RD_MASK		equ	3<<VICON_G3RD_BIT
+VICON_G2ND_MASK		equ	3<<VICON_G2ND_BIT
+VICON_G1ST_MASK		equ	3<<VICON_G1ST_BIT
+
+VICON_VISIBLE		equ	$00E82600	;.w 特殊/表示。Ys|AH|VHT|EXON|HP|BP|GG|GT|BCON|SON|TON|GS4|GS3|GS2|GS1|GS0
+VICON_YS_BIT		equ	15		;1=スーパーインポーズのときコンピュータ画面のみ表示
+VICON_AHON_BIT		equ	14		;1=グラフィックカラーとテキストパレット0のカラーを混ぜる
+VICON_VHT_BIT		equ	13		;1=1番目とTVを半透明
+VICON_EXON_BIT		equ	12		;0=拡張なし,1=拡張あり
+VICON_HALF_BIT		equ	11		;拡張モードの選択。0=特殊プライオリティ,1=半透明
+VICON_PLSB_BIT		equ	10		;領域指定。0=カラー(パレットテーブルの内容)が奇数,1=パレット(GVRAMの内容)が奇数
+VICON_GRGR_BIT		equ	9		;(半透明のとき)1=1番目と2番目を半透明
+VICON_GRST_BIT		equ	8		;(半透明のとき)1=1番目と奥のスプライト・テキスト画面を半透明
+VICON_BCON_BIT		equ	7		;1=ボーダーカラーを表示
+VICON_SPON_BIT		equ	6		;1=スプライト画面を表示
+VICON_TXON_BIT		equ	5		;1=テキスト画面を表示
+VICON_GXON_BIT		equ	4		;1=1024ドットを表示
+VICON_G4ON_BIT		equ	3		;1=16色の4番目、256色の2番目、65536色を表示
+VICON_G3ON_BIT		equ	2		;1=16色の3番目、256色の2番目、65536色を表示
+VICON_G2ON_BIT		equ	1		;1=16色の2番目、256色の1番目、65536色を表示
+VICON_G1ON_BIT		equ	0		;1=16色の1番目、256色の1番目、65536色を表示
+VICON_YS_MASK		equ	1<<VICON_YS_BIT
+VICON_AHON_MASK		equ	1<<VICON_AHON_BIT
+VICON_VHT_MASK		equ	1<<VICON_VHT_BIT
+VICON_EXON_MASK		equ	1<<VICON_EXON_BIT
+VICON_HALF_MASK		equ	1<<VICON_HALF_BIT
+VICON_PLSB_MASK		equ	1<<VICON_PLSB_BIT
+VICON_GRGR_MASK		equ	1<<VICON_GRGR_BIT
+VICON_GRST_MASK		equ	1<<VICON_GRST_BIT
+VICON_BCON_MASK		equ	1<<VICON_BCON_BIT
+VICON_SPON_MASK		equ	1<<VICON_SPON_BIT
+VICON_TXON_MASK		equ	1<<VICON_TXON_BIT
+VICON_GXON_MASK		equ	1<<VICON_GXON_BIT
+VICON_G4ON_MASK		equ	1<<VICON_G4ON_BIT
+VICON_G3ON_MASK		equ	1<<VICON_G3ON_BIT
+VICON_G2ON_MASK		equ	1<<VICON_G2ON_BIT
+VICON_G1ON_MASK		equ	1<<VICON_G1ON_BIT
+
+  .endif  __vicon_equ__
+	.list

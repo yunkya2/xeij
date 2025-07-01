@@ -1,0 +1,158 @@
+	.nlist
+  .ifndef __doscall_mac__
+__doscall_mac__	equ	1
+
+;----------------------------------------------------------------
+;
+;	DOSコール
+;
+;----------------------------------------------------------------
+
+_EXIT		equ	$FF00		;プロセスの終了(終了コード指定なし)
+_GETCHAR	equ	$FF01		;標準入力から1バイト入力(標準出力にエコーバックする)
+_PUTCHAR	equ	$FF02		;標準出力に1バイト出力
+_COMINP		equ	$FF03		;標準シリアル入出力から1バイト入力
+_COMOUT		equ	$FF04		;標準シリアル入出力に1バイト出力
+_PRNOUT		equ	$FF05		;標準プリンタ出力に1バイト出力
+_INPOUT		equ	$FF06		;標準ハンドラへの入出力
+_INKEY		equ	$FF07		;標準入力から1バイト入力(^C,^P,^Nを処理しない)
+_GETC		equ	$FF08		;標準入力から1バイト入力(^C,^P,^Nを処理する)
+_PRINT		equ	$FF09		;標準出力に文字列を出力
+_GETS		equ	$FF0A		;標準入力から文字列を入力(^C,^P,^Nを処理する)
+_KEYSNS		equ	$FF0B		;標準入力から1バイト先読み
+_KFLUSH		equ	$FF0C		;標準入力バッファをフラッシュしてから標準入力から入力
+_FFLUSH		equ	$FF0D		;バッファフラッシュ
+_CHGDRV		equ	$FF0E		;カレントドライブの変更
+_DRVCTRL	equ	$FF0F		;ドライブコントロール
+_CONSNS		equ	$FF10		;標準出力への出力の可・不可を調べる
+_PRNSNS		equ	$FF11		;標準プリンタ出力への出力の可・不可を調べる
+_CINSNS		equ	$FF12		;標準シリアル入出力からの入力の可・不可を調べる
+_COUTSNS	equ	$FF13		;標準シリアル入出力への出力の可・不可を調べる
+
+_FATCHK		equ	$FF17		;ファイルやディレクトリのFATの繋がりを調べる
+_HENDSP		equ	$FF18		;かな漢字変換ウィンドウの表示
+_CURDRV		equ	$FF19		;カレントドライブ番号を得る
+_GETSS		equ	$FF1A		;標準入力から文字列を入力(^C,^P,^Nを処理しない)
+_FGETC		equ	$FF1B		;ハンドラから1バイト入力
+_FGETS		equ	$FF1C		;ハンドラから文字列を入力
+_FPUTC		equ	$FF1D		;ハンドラへ1バイト出力
+_FPUTS		equ	$FF1E		;ハンドラへ文字列を出力
+_ALLCLOSE	equ	$FF1F		;実行中のプロセスとその子プロセスがオープンしたハンドラをすべてクローズする
+_SUPER		equ	$FF20		;スーパーバイザモードの切り替え
+_FNCKEY		equ	$FF21		;再定義可能キーの読み込みと設定
+_KNJCTRL	equ	$FF22		;かな漢字変換の制御
+_CONCTRL	equ	$FF23		;コンソール出力の制御
+_KEYCTRL	equ	$FF24		;コンソール入力の制御
+_INTVCS		equ	$FF25		;例外処理ベクタの設定
+_PSPSET		equ	$FF26		;プロセス管理テーブルの作成
+_GETTIM2	equ	$FF27		;時刻を得る(ロングワード)
+_SETTIM2	equ	$FF28		;時刻を設定する(ロングワード)
+_NAMESTS	equ	$FF29		;ファイル名の分解
+_GETDATE	equ	$FF2A		;日付を得る
+_SETDATE	equ	$FF2B		;日付を設定する
+_GETTIME	equ	$FF2C		;時刻を得る(ワード)
+_SETTIME	equ	$FF2D		;時刻を設定する(ワード)
+_VERIFY		equ	$FF2E		;verifyのモードの設定
+_DUP0		equ	$FF2F		;標準ハンドラの変換
+_VERNUM		equ	$FF30		;Humanのバージョンの取得
+_KEEPPR		equ	$FF31		;プロセスの常駐終了
+_GETDPB		equ	$FF32		;DPBの取得
+_BREAKCK	equ	$FF33		;breakおよびoffの取得と設定
+_DRVXCHG	equ	$FF34		;ドライブの入れ換え
+_INTVCG		equ	$FF35		;例外処理ベクタの取得
+_DSKFRE		equ	$FF36		;ドライブの空容量の取得
+_NAMECK		equ	$FF37		;ファイル名のチェック
+
+_MKDIR		equ	$FF39		;ディレクトリの作成
+_RMDIR		equ	$FF3A		;ディレクトリの削除
+_CHDIR		equ	$FF3B		;カレントディレクトリの設定
+_CREATE		equ	$FF3C		;新規ファイルの作成
+_OPEN		equ	$FF3D		;ファイルのオープン
+_CLOSE		equ	$FF3E		;ハンドラのクローズ
+_READ		equ	$FF3F		;ハンドラから指定されたサイズのデータを読み込む
+_WRITE		equ	$FF40		;ハンドラへ指定されたサイズのデータを書き込む
+_DELETE		equ	$FF41		;ファイルの削除
+_SEEK		equ	$FF42		;ハンドラのシーク位置の変更
+_CHMOD		equ	$FF43		;ファイルまたはディレクトリの属性の読み込みと設定
+_IOCTRL		equ	$FF44		;デバイスによるハンドラの直接制御
+_DUP		equ	$FF45		;ハンドラの複製
+_DUP2		equ	$FF46		;ハンドラの複写
+_CURDIR		equ	$FF47		;カレントディレクトリの取得
+_MALLOC		equ	$FF48		;メモリブロックの確保(下位から)
+_MFREE		equ	$FF49		;メモリブロックの開放
+_SETBLOCK	equ	$FF4A		;メモリブロックのサイズの変更
+_EXEC		equ	$FF4B		;子プロセスの実行
+_EXIT2		equ	$FF4C		;プロセスの終了(終了コード指定あり)
+_WAIT		equ	$FF4D		;子プロセスの終了コードの取得
+_FILES		equ	$FF4E		;ディレクトリエントリの検索(最初)
+_NFILES		equ	$FF4F		;ディレクトリエントリの検索(次)
+
+_V2_SETPDB	equ	$FF50		;プロセス管理テーブルの移動
+_V2_GETPDB	equ	$FF51		;プロセス管理テーブルの取得
+_V2_SETENV	equ	$FF52		;環境変数の設定
+_V2_GETENV	equ	$FF53		;環境変数の取得
+_V2_VERIFYG	equ	$FF54		;verifyのモードの取得
+_V2_COMMON	equ	$FF55		;common領域の制御
+_V2_RENAME	equ	$FF56		;ファイル名またはディレクトリ名の変更およびファイルの移動
+_V2_FILEDATE	equ	$FF57		;ハンドラの更新日時の取得と設定
+_V2_MALLOC2	equ	$FF58		;メモリブロックの確保(モード指定あり)
+
+_V2_MAKETMP	equ	$FF5A		;テンポラリファイルの作成
+_V2_NEWFILE	equ	$FF5B		;新規ファイルの作成(非破壊)
+_V2_LOCK	equ	$FF5C		;ハンドラのロックの制御
+
+_V2_ASSIGN	equ	$FF5F		;仮想ドライブおよび仮想ディレクトリの取得と設定
+
+_V2_FFLUSH_SET	equ	$FF7A		;fflushのモードの取得と設定(2.15～)
+_V2_OS_PATCH	equ	$FF7B		;Humanの変更(2.15～)
+_V2_GETFCB	equ	$FF7C		;FCBテーブルの取得
+_V2_S_MALLOC	equ	$FF7D		;メインスレッドのメモリ管理からメモリブロックを確保
+_V2_S_MFREE	equ	$FF7E		;メインスレッドのメモリ管理からメモリブロックを削除
+_V2_S_PROCESS	equ	$FF7F		;サブのメモリ管理の設定
+
+_SETPDB		equ	$FF80		;プロセス管理テーブルの移動
+_GETPDB		equ	$FF81		;プロセス管理テーブルの取得
+_SETENV		equ	$FF82		;環境変数の設定
+_GETENV		equ	$FF83		;環境変数の取得
+_VERIFYG	equ	$FF84		;verifyのモードの取得
+_COMMON		equ	$FF85		;common領域の制御
+_RENAME		equ	$FF86		;ファイル名またはディレクトリ名の変更およびファイルの移動
+_FILEDATE	equ	$FF87		;ハンドラの更新日時の取得と設定
+_MALLOC2	equ	$FF88		;メモリブロックの確保(モード指定あり)
+
+_MAKETMP	equ	$FF8A		;テンポラリファイルの作成
+_NEWFILE	equ	$FF8B		;新規ファイルの作成(非破壊)
+_LOCK		equ	$FF8C		;ハンドラのロックの制御
+
+_ASSIGN		equ	$FF8F		;仮想ドライブおよび仮想ディレクトリの取得と設定
+
+_FFLUSH_SET	equ	$FFAA		;fflushのモードの取得と設定(2.15～)
+_OS_PATCH	equ	$FFAB		;Humanの変更(2.15～)
+_GETFCB		equ	$FFAC		;FCBテーブルの取得
+_S_MALLOC	equ	$FFAD		;メインスレッドのメモリ管理からメモリブロックを確保
+_S_MFREE	equ	$FFAE		;メインスレッドのメモリ管理からメモリブロックを削除
+_S_PROCESS	equ	$FFAF		;サブのメモリ管理の設定
+
+_EXITVC		equ	$FFF0		;_EXITVC(プロセスが終了したときのジャンプ先のベクタ)
+_CTRLVC		equ	$FFF1		;_CTRLVC(^Cのときのジャンプ先のベクタ)
+_ERRJVC		equ	$FFF2		;_ERRJVC(システムエラーが発生したときのジャンプ先のベクタ)
+_DISKRED	equ	$FFF3		;ハンドラから直接読み込む
+_DISKWRT	equ	$FFF4		;ハンドラに直接書き込む
+_INDOSFLG	equ	$FFF5		;DOSワークのアドレス
+_SUPER_JSR	equ	$FFF6		;スーパーバイザサブルーチンの呼び出し
+_BUS_ERR	equ	$FFF7		;バスエラーチェック
+_OPEN_PR	equ	$FFF8		;バックグラウンドタスクの登録(スレッドが生成されたとき呼ばれるベクタ)
+_KILL_PR	equ	$FFF9		;プロセスの削除(スレッドが消滅したとき呼ばれるベクタ)
+_GET_PR		equ	$FFFA		;スレッド管理情報の取得
+_SUSPEND_PR	equ	$FFFB		;強制スリープ
+_SLEEP_PR	equ	$FFFC		;スリープ
+_SEND_PR	equ	$FFFD		;スレッド間通信
+_TIME_PR	equ	$FFFE		;タイマカウンタの取得
+_CHANGE_PR	equ	$FFFF		;実行権の放棄(スレッドが切り替わったとき呼ばれるベクタ)
+
+DOS	.macro	num
+	.dc.w	num
+	.endm
+
+  .endif  ;__doscall_mac__
+	.list

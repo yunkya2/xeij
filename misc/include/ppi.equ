@@ -1,0 +1,116 @@
+	.nlist
+  .ifndef __ppi_equ__
+__ppi_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	8255 PPI
+;
+;----------------------------------------------------------------
+
+;接続図
+;	                              8255
+;	    ┏━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+;	    ┃A7  A5  A3  A1      B7  B5  B3  B1  C7  C5  C3  C1  ┃
+;	    ┃│A6│A4│A2│A0    │B6│B4│B2│B0│C6│C4│C2│C0┃
+;	    ┗┿┿┿┿┿┿┿┿━━┿┿┿┿┿┿┿┿┿┿┿┿┿┿┿┿┛
+;	      + B A + R L D U     + B A + R L D U │││││││└R
+;	        ││  ││││  ┌─┼┘  ││││││││││└─L
+;	        ○┼─┼┼┼┼─┼─┼──┼┼┼┼┘│││││┏━┓
+;	    ┌─┼○─┼┼┼┼─┼─┼──┼┼┼┼─┘│││└╂S1┃
+;	  ┌┼─┼──┼┼┼┘┌┼─┼──┼┼┼┘    ││└─╂S2┃
+;	  ││┌┼──┼┼┘  ││┌┼──┼┼┘      ││    ┗━┛
+;	  ││││┌─┼┘    ││││┌─┼┘        ││   MSM6258
+;	  │││││┌┼───┼┼┼┼┼─┼─────┼┘
+;	  │││││││      │││││┌┼─────┘
+;	  U A D B L │R G +   U A D B L │R G +
+;	┏┿┿┿┿┿┿┿┿┿┳┿┿┿┿┿┿┿┿┿┓
+;	┃○│○│○│○│○┃○│○│○│○│○┃
+;	┃1 ○2 ○3 ○4 ○5 ┃1 ○2 ○3 ○4 ○5 ┃
+;	┗┓6   7   8   9 ┏┻┓6   7   8   9 ┏┛
+;	  ┗━━━━━━━┛  ┗━━━━━━━┛
+;	   JOY STICK 1(JS)     JOY STICK 2(JT)
+
+;PPIポートA
+;	-|JS7|JS6|-|JS4|JS3|JS2|JS1
+PPI_PORT_A		equ	$00E9A001	;ジョイスティック1
+PPI_A_JS7_BIT		equ	  6
+PPI_A_JS7_MASK		equ	%01000000	;PA6 JS7入力。0=Bが押されている
+PPI_A_JS6_BIT		equ	   5
+PPI_A_JS6_MASK		equ	%00100000	;PA5 JS6入力。0=Aが押されている
+PPI_A_JS4_BIT		equ	     3
+PPI_A_JS4_MASK		equ	%00001000	;PA3 JS4入力。0=→が押されている
+PPI_A_JS3_BIT		equ	      2
+PPI_A_JS3_MASK		equ	%00000100	;PA2 JS3入力。0=←が押されている
+PPI_A_JS2_BIT		equ	       1
+PPI_A_JS2_MASK		equ	%00000010	;PA1 JS2入力。0=↓が押されている
+PPI_A_JS1_BIT		equ	        0
+PPI_A_JS1_MASK		equ	%00000001	;PA0 JS1入力。0=↑が押されている
+
+;PPIポートB
+;	-|JT7|JT6|-|JT4|JT3|JT2|JT1
+PPI_PORT_B		equ	$00E9A003	;ジョイスティック2
+PPI_B_JT7_BIT		equ	  6
+PPI_B_JT7_MASK		equ	%01000000	;PB6 JT7入力。0=Bが押されている
+PPI_B_JT6_BIT		equ	   5
+PPI_B_JT6_MASK		equ	%00100000	;PB5 JT6入力。0=Aが押されている
+PPI_B_JT4_BIT		equ	     3
+PPI_B_JT4_MASK		equ	%00001000	;PB3 JT4入力。0=→が押されている
+PPI_B_JT3_BIT		equ	      2
+PPI_B_JT3_MASK		equ	%00000100	;PB2 JT3入力。0=←が押されている
+PPI_B_JT2_BIT		equ	       1
+PPI_B_JT2_MASK		equ	%00000010	;PB1 JT2入力。0=↓が押されている
+PPI_B_JT1_BIT		equ	        0
+PPI_B_JT1_MASK		equ	%00000001	;PB0 JT1入力。0=↑が押されている
+
+;PPIポートC
+;	JS7|JS6|JT8|JS8|RATIO##|LEFT|RIGHT
+PPI_PORT_C		equ	$00E9A005	;ジョイスティック、ADPCMコントロール
+PPI_C_JS7_BIT		equ	 7
+PPI_C_JS7_MASK		equ	%10000000	;PC7 JS7出力(負論理)
+PPI_C_JS6_BIT		equ	  6
+PPI_C_JS6_MASK		equ	%01000000	;PC6 JS6出力(負論理)
+PPI_C_JT8_BIT		equ	   5
+PPI_C_JT8_MASK		equ	%00100000	;PC5 JT8出力
+PPI_C_JS8_BIT		equ	    4
+PPI_C_JS8_MASK		equ	%00010000	;PC4 JS8出力
+PPI_C_RATIO_BIT		equ	      2
+PPI_C_RATIO_MASK	equ	%00001100	;PC3-PC2 ADPCM分周比。00=1/1024,01=1/768,10=1/512,11=inhibited
+PPI_C_RATIO_1024	equ	%00000000	;00=1/1024
+PPI_C_RATIO_768		equ	%00000100	;01=1/768
+PPI_C_RATIO_512		equ	%00001000	;10=1/512
+PPI_C_LEFT_BIT		equ	       1
+PPI_C_LEFT_MASK		equ	%00000010	;PC1 ADPCM出力LEFT。0=出力する,1=出力しない
+PPI_C_RIGHT_BIT		equ	        0
+PPI_C_RIGHT_MASK	equ	%00000001	;PC0 ADPCM出力RIGHT。0=出力する,1=出力しない
+
+;PPIコントロール
+;	0|---|BIT###|VALUE
+;	1|A_MODE##|A_DIR|C_UPPER_DIR|B_MODE|B_DIR|C_LOWER_DIR
+PPI_CONTROL		equ	$00E9A007	;コントロール
+PPI_CONTROL_PORT	equ	%00000000	;0=ポートCで出力に設定されているビットの操作
+PPI_CONTROL_MODE	equ	%10000000	;1=モードの設定
+;ポートCで出力に設定されているビットの操作
+PPI_SELECT_BIT		equ	       1
+PPI_SELECT_MASK		equ	%00001110	;ビット選択
+PPI_SET_RESET_BIT	equ	        0
+PPI_SET_RESET_MASK	equ	%00000001	;0=リセット,1=セット
+;モードの設定
+;	モード0(Basic Input/Output)
+;	モード1(Strobed Input/Output)
+;	モード2(Strobed Bi-Directional Bus I/O)
+PPI_A_MODE_BIT		equ	   5
+PPI_A_MODE_MASK		equ	%01100000	;グループA(ポートAとポートCの上位)のモード
+PPI_A_DIR_BIT		equ	    4
+PPI_A_DIR_MASK		equ	%00010000	;ポートAの方向。0=出力,1=入力
+PPI_C_UPPER_DIR_BIT	equ	     3
+PPI_C_UPPER_DIR_MASK	equ	%00001000	;ポートCの上位の方向。0=出力,1=入力
+PPI_B_MODE_BIT		equ	      2
+PPI_B_MODE_MASK		equ	%00000100	;グループB(ポートBとポートCの下位)のモード
+PPI_B_DIR_BIT		equ	       1
+PPI_B_DIR_MASK		equ	%00000010	;ポートBの方向。0=出力,1=入力
+PPI_C_LOWER_DIR_BIT	equ	        0
+PPI_C_LOWER_DIR_MASK	equ	%00000001	;ポートCの下位の方向。0=出力,1=入力
+
+  .endif  ;__ppi_equ__
+	.list

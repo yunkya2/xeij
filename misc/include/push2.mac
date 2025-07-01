@@ -1,0 +1,371 @@
+	.nlist
+  .ifndef __push2_mac__
+__push2_mac__	equ	1
+
+;push.macはccrが変化しない
+;push2.macはレジスタが1個でデータレジスタのときccrが変化する
+  .ifdef __push_mac__
+	.fail	1	;push.macとpush2.macは共存できない
+  .endif
+
+;----------------------------------------------------------------
+;
+;	プッシュとポップ
+;
+;----------------------------------------------------------------
+;	push	list1,alloc1		movem.l	list1,-(sp)
+;					lea.l	-alloc1(sp),sp
+;		:				:
+;	push_again			movem.l	list1,-(sp)
+;					lea.l	-alloc1(sp),sp
+;		:				:
+;		push	list2,alloc2		movem.l	list2,-(sp)
+;						lea.l	-alloc2(sp),sp
+;			:				:
+;		push_again			movem.l	list2,-(sp)
+;						lea.l	-alloc2(sp),sp
+;			:				:
+;		pop_test			lea.l	alloc2(sp),sp
+;						movem.l	(sp)+,list2
+;			:				:
+;		pop				lea.l	alloc2(sp),sp
+;						movem.l	(sp)+,list2
+;			:				:
+;	pop_test			lea.l	alloc1(sp),sp
+;					movem.l	(sp)+,list1
+;		:				:
+;	pop				lea.l	alloc1(sp),sp
+;					movem.l	(sp)+,list1
+;	レジスタが1個のときデータレジスタはmove、アドレスレジスタのpushはpea、popはmoveaを使う
+;	レジスタが2個以上のときmovemを使う
+;	レジスタが1個でデータレジスタのときccrが変化することに注意
+;	pushmとpopmは常にmovemを使う
+;	allocは1～8のときaddq/subq、9以上のときlea、32768以上のときadda/subaを使う
+;----------------------------------------------------------------
+
+~pushdepth = 0				;push～popの深さ。0=なし
+~pushlist reg d0			;最も内側のpush～popのlist
+;~pushlist%~pushdepth			;~pushlistのスタック
+~pushisar = 0				;-1=最も内側のlistはアドレスレジスタ
+;~pushisar%~pushdepth			;~pushisarのスタック
+~pushalloc = 0				;最も内側のpush～popのalloc
+;~pushalloc%~pushdepth			;~pushallocのスタック
+
+;----------------------------------------------------------------
+;文字列はアドレスレジスタか
+;	文字列の先頭がaまたはsならば-1、さもなくば0を返す
+;	データレジスタとアドレスレジスタを判別することが目的だが、aSPC reg a6のような置換も許容する
+isar	.macro	string,bool
+@c = 0
+  .irpc c,string
+    .if @c=0
+@c = '&c'
+    .endif
+  .endm
+bool = (@c='A').or.(@c='a').or.(@c='S').or.(@c='s')
+	.endm
+
+;----------------------------------------------------------------
+pop	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;popに対応するpushがない
+	.exitm
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	addq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	~pushalloc(sp),sp
+	.sall
+    .else
+	.lall
+	adda.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+  .if .sizeof.(~pushlist)<>4		;レジスタが2個以上
+	.lall
+	movem.l	(sp)+,~pushlist
+	.sall
+  .elif ~pushisar			;レジスタが1個でアドレスレジスタ
+	.lall
+	movea.l	(sp)+,~pushlist
+	.sall
+  .else					;レジスタが1個でデータレジスタ
+	.lall
+	move.l	(sp)+,~pushlist
+	.sall
+  .endif
+~pushdepth = ~pushdepth-1
+~pushlist reg ~pushlist%~pushdepth
+~pushisar = ~pushisar%~pushdepth
+~pushalloc = ~pushalloc%~pushdepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+popm	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;popmに対応するpushがない
+	.exitm
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	addq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	~pushalloc(sp),sp
+	.sall
+    .else
+	.lall
+	adda.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	movem.l	(sp)+,~pushlist
+	.sall
+~pushdepth = ~pushdepth-1
+~pushlist reg ~pushlist%~pushdepth
+~pushisar = ~pushisar%~pushdepth
+~pushalloc = ~pushalloc%~pushdepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+pop_test	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;pop_testに対応するpushがない
+	.exitm
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	addq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	~pushalloc(sp),sp
+	.sall
+    .else
+	.lall
+	adda.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+  .if .sizeof.(~pushlist)<>4		;レジスタが2個以上
+	.lall
+	movem.l	(sp)+,~pushlist
+	.sall
+  .elif ~pushisar			;レジスタが1個でアドレスレジスタ
+	.lall
+	movea.l	(sp)+,~pushlist
+	.sall
+  .else					;レジスタが1個でデータレジスタ
+	.lall
+	move.l	(sp)+,~pushlist
+	.sall
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+popm_test	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;popm_testに対応するpushがない
+	.exitm
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	addq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	~pushalloc(sp),sp
+	.sall
+    .else
+	.lall
+	adda.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	movem.l	(sp)+,~pushlist
+	.endm
+
+;----------------------------------------------------------------
+push	.macro	list,alloc
+	.sizem	sz,cn
+	.sall
+~pushlist%~pushdepth reg ~pushlist
+~pushisar%~pushdepth = ~pushisar
+~pushalloc%~pushdepth = ~pushalloc
+~pushdepth = ~pushdepth+1
+~pushlist reg list
+	isar	list,~pushisar
+  .if cn<2
+~pushalloc = 0
+  .elif 0<=alloc
+~pushalloc = alloc
+  .else
+	.lall
+	.fail	1	;pushのallocが負数
+	.exitm
+  .endif
+  .if .sizeof.(~pushlist)<>4		;レジスタが2個以上
+	.lall
+	movem.l	~pushlist,-(sp)
+	.sall
+  .elif ~pushisar			;レジスタが1個でアドレスレジスタ
+	.lall
+	pea.l	(~pushlist)
+	.sall
+  .else					;レジスタが1個でデータレジスタ
+	.lall
+	move.l	~pushlist,-(sp)
+	.sall
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	subq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	-(~pushalloc)(sp),sp
+	.sall
+    .else
+	.lall
+	suba.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+pushm	.macro	list,alloc
+	.sizem	sz,cn
+	.sall
+~pushlist%~pushdepth reg ~pushlist
+~pushisar%~pushdepth = ~pushisar
+~pushalloc%~pushdepth = ~pushalloc
+~pushdepth = ~pushdepth+1
+~pushlist reg list
+	isar	list,~pushisar
+  .if cn<2
+~pushalloc = 0
+  .elif 0<=alloc
+~pushalloc = alloc
+  .else
+	.lall
+	.fail	1	;pushのallocが負数
+	.exitm
+  .endif
+	.lall
+	movem.l	~pushlist,-(sp)
+	.sall
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	subq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	-(~pushalloc)(sp),sp
+	.sall
+    .else
+	.lall
+	suba.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+push_again	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;push_againに対応するpushがない
+	.exitm
+  .endif
+  .if .sizeof.(~pushlist)<>4		;レジスタが2個以上
+	.lall
+	movem.l	~pushlist,-(sp)
+	.sall
+  .elif ~pushisar			;レジスタが1個でアドレスレジスタ
+	.lall
+	pea.l	(~pushlist)
+	.sall
+  .else					;レジスタが1個でデータレジスタ
+	.lall
+	move.l	~pushlist,-(sp)
+	.sall
+  .endif
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	subq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	-(~pushalloc)(sp),sp
+	.sall
+    .else
+	.lall
+	suba.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+pushm_again	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;pushm_againに対応するpushがない
+	.exitm
+  .endif
+	.lall
+	movem.l	~pushlist,-(sp)
+	.sall
+  .if ~pushalloc
+    .if ~pushalloc<=8
+	.lall
+	subq.l	#~pushalloc,sp
+	.sall
+    .elif ~pushalloc<=32767
+	.lall
+	lea.l	-(~pushalloc)(sp),sp
+	.sall
+    .else
+	.lall
+	suba.l	#~pushalloc,sp
+	.sall
+    .endif
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+
+  .endif  ;__push2_mac__
+	.list

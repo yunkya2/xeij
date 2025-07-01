@@ -1,0 +1,79 @@
+	.nlist
+  .ifndef __push_mac__
+__push_mac__	equ	1
+
+;----------------------------------------------------------------
+;
+;	プッシュとポップ
+;
+;----------------------------------------------------------------
+;	push	rl1			movem.l	rl1,-(sp)
+;		:				:
+;	push_again			movem.l	rl1,-(sp)
+;		:				:
+;		push	rl2			movem.l	rl2,-(sp)
+;			:				:
+;		push_again			movem.l	rl2,-(sp)
+;			:				:
+;		pop_test			movem.l	(sp)+,rl2
+;			:				:
+;		pop				movem.l	(sp)+,rl2
+;			:				:
+;	pop_test			movem.l	(sp)+,rl1
+;		:				:
+;	pop				movem.l	(sp)+,rl1
+;----------------------------------------------------------------
+
+~pushdepth = 0				;push～popの深さ。0=なし
+~pushrl reg d0				;最も内側のpush～popのrl
+;~pushrl%~pushdepth			;~pushrlのスタック
+
+;----------------------------------------------------------------
+pop	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;popに対応するpushがない
+	.exitm
+  .endif
+	.lall
+	movem.l	(sp)+,~pushrl
+	.sall
+~pushdepth = ~pushdepth-1
+~pushrl reg ~pushrl%~pushdepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+pop_test	.macro
+	.sall
+  .if ~pushdepth=0
+	.lall
+	.fail	1	;pop_testに対応するpushがない
+	.exitm
+  .endif
+	.lall
+	movem.l	(sp)+,~pushrl
+	.endm
+
+;----------------------------------------------------------------
+push	.macro	rl
+	.sall
+~pushrl%~pushdepth reg ~pushrl
+~pushdepth = ~pushdepth+1
+~pushrl reg rl
+	.lall
+	movem.l	~pushrl,-(sp)
+	.endm
+
+;----------------------------------------------------------------
+push_again	.macro
+	.sall
+	.lall
+	movem.l	~pushrl,-(sp)
+	.endm
+
+;----------------------------------------------------------------
+
+  .endif  ;__push_mac__
+	.list

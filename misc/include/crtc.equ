@@ -1,0 +1,49 @@
+	.nlist
+  .ifndef __crtc_equ__
+__crtc_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	CRTC
+;
+;----------------------------------------------------------------
+
+CRTC_H_FRONT_END		equ	$00E80000	;.w R00 水平フロントポーチ終了カラム
+CRTC_H_SYNC_END			equ	$00E80002	;.w R01 水平同期パルス終了カラム
+CRTC_H_BACK_END			equ	$00E80004	;.w R02 水平バックポーチ終了カラム-4
+CRTC_H_DISP_END			equ	$00E80006	;.w R03 水平映像期間終了カラム-4
+CRTC_V_FRONT_END		equ	$00E80008	;.w R04 垂直フロントポーチ終了ラスタ
+CRTC_V_SYNC_END			equ	$00E8000A	;.w R05 垂直同期パルス終了ラスタ
+CRTC_V_BACK_END			equ	$00E8000C	;.w R06 垂直バックポーチ終了ラスタ
+CRTC_V_DISP_END			equ	$00E8000E	;.w R07 垂直映像期間終了ラスタ
+CRTC_ADJUST			equ	$00E80010	;.w R08 外部同期アジャスト。TVとX68000の水平同期パルスの立下りの時間差(38MHz)
+CRTC_RASTER			equ	$00E80012	;.w R09 ラスタ割り込み位置。0=垂直同期パルスの最初のラスタ
+CRTC_TEXT_X			equ	$00E80014	;.w R10 テキストX方向スクロール。X方向スクロールはラスタ毎に変更できる
+CRTC_TEXT_Y			equ	$00E80016	;.w R11 テキストY方向スクロール。Y方向スクロールは垂直映像期間の先頭でラッチされる
+CRTC_GRAPHIC_X_0		equ	$00E80018	;.w R12 グラフィックX方向スクロール0
+CRTC_GRAPHIC_Y_0		equ	$00E8001A	;.w R13 グラフィックY方向スクロール0
+CRTC_GRAPHIC_X_1		equ	$00E8001C	;.w R14 グラフィックX方向スクロール1
+CRTC_GRAPHIC_Y_1		equ	$00E8001E	;.w R15 グラフィックY方向スクロール1
+CRTC_GRAPHIC_X_2		equ	$00E80020	;.w R16 グラフィックX方向スクロール2
+CRTC_GRAPHIC_Y_2		equ	$00E80022	;.w R17 グラフィックY方向スクロール2
+CRTC_GRAPHIC_X_3		equ	$00E80024	;.w R18 グラフィックX方向スクロール3
+CRTC_GRAPHIC_Y_3		equ	$00E80026	;.w R19 グラフィックY方向スクロール3
+CRTC_MODE_RESOLUTION		equ	$00E80028	;.w R20 メモリモードと解像度。---|テキストストレージ|グラフィックストレージ|1024ドット|65536色|16色/256色|---|高解像度|垂直解像度##|水平解像度##
+CRTC_MODE_BYTE			equ	$00E80028	;.b R20H メモリモード。---|テキストストレージ|グラフィックストレージ|1024ドット|65536色|16色/256色
+CRTC_TEXT_STORAGE_BIT		equ	    4		;テキストストレージ。テキスト画面が乱れるので非表示にすること。僅かに速くなる
+CRTC_TEXT_STORAGE_MASK		equ	%00010000
+CRTC_GRAPHIC_STORAGE_BIT	equ	     3		;グラフィックストレージ。グラフィック画面が乱れるので非表示にすること。僅かに速くなる
+CRTC_GRAPHIC_STORAGE_MASK	equ	%00001000
+CRTC_MODE_1024			equ	%00000100
+CRTC_MODE_65536			equ	%00000011
+CRTC_MODE_256			equ	%00000001
+CRTC_MODE_16			equ	%00000000
+CRTC_RESOLUTION_BYTE		equ	$00E80029	;.b R20L 解像度。---|高解像度|垂直解像度##|水平解像度##
+CRTC_ACCESS			equ	$00E8002A	;.w R21 アクセス制御。------|マスクON|同時ON|同時プレーン####|コピークリアプレーン####
+CRTC_BLOCK			equ	$00E8002C	;.w R22 ソースラスタブロック########|デスティネーションラスタブロック########
+CRTC_MASK			equ	$00E8002E	;.w R23 ビットマスク。1のビットに書き込まない
+CRTC_R24			equ	$00E80030	;.w R24 
+CRTC_ACTION			equ	$00E80480	;.w 動作ポート。--------|----|ラスタコピー|-|高速クリア|画像入力
+
+  .endif  ;__crtc_equ__
+	.list

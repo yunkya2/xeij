@@ -1,0 +1,188 @@
+	.nlist
+  .ifndef __mfp_equ__
+__mfp_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	MC68901 MFP
+;
+;----------------------------------------------------------------
+
+;GPIPデータレジスタ
+;	HSYNC|RINT|-|VDISP|OPMIRQ|POWER|EXPWON|ALARM
+MFP_GPDR		equ	$00E88001
+MFP_G_HSYNC_BIT		equ	 7
+MFP_G_HSYNC_MASK	equ	%10000000	;CRTC H-SYNC。0=水平バックポーチ／水平映像期間／水平フロントポーチ,1=水平同期パルス
+MFP_G_RINT_BIT		equ	  6
+MFP_G_RINT_MASK		equ	%01000000	;CRTC IRQ。0=指定されたラスタ,1=指定されたラスタではない
+MFP_G_VDISP_BIT		equ	    4
+MFP_G_VDISP_MASK	equ	%00010000	;CRTC V-DISP。0=垂直フロントポーチ／垂直同期パルス／垂直バックポーチ,1=垂直映像期間
+MFP_G_OPMIRQ_BIT	equ	     3
+MFP_G_OPMIRQ_MASK	equ	%00001000	;OPM IRQ。0=OPM割り込み要求あり
+MFP_G_POWER_BIT		equ	      2
+MFP_G_POWER_MASK	equ	%00000100	;POWER。0=POWERスイッチON
+MFP_G_EXPWON_BIT	equ	       1
+MFP_G_EXPWON_MASK	equ	%00000010	;EXPWON。0=EXPWONによる電源ON
+MFP_G_ALARM_BIT		equ	        0
+MFP_G_ALARM_MASK	equ	%00000001	;RTC ALARM。0=ALARMによる電源ON
+
+;アクティブエッジレジスタ
+;	HSYNC|RINT|-|VDISP|OPMIRQ|POWER|EXPWON|ALARM
+;	1=0→1
+MFP_AER			equ	$00E88003
+
+;データディレクションレジスタ
+;	HSYNC|RINT|-|VDISP|OPMIRQ|POWER|EXPWON|ALARM
+;	1=出力
+MFP_DDR			equ	$00E88005
+
+;割り込みイネーブルレジスタA
+;	HSYNC|RINT|TIMERA|FULL|RECEIVE|EMPTY|TRANSMIT|TIMERB
+;	1=許可
+;	0でIPRAも0に
+MFP_IERA		equ	$00E88007
+MFP_A_HSYNC_BIT		equ	 7
+MFP_A_HSYNC_MASK	equ	%10000000
+MFP_A_RINT_BIT		equ	  6
+MFP_A_RINT_MASK		equ	%01000000
+MFP_A_TIMERA_BIT	equ	   5
+MFP_A_TIMERA_MASK	equ	%00100000
+MFP_A_FULL_BIT		equ	    4
+MFP_A_FULL_MASK		equ	%00010000
+MFP_A_RECEIVE_BIT	equ	     3
+MFP_A_RECEIVE_MASK	equ	%00001000
+MFP_A_EMPTY_BIT		equ	      2
+MFP_A_EMPTY_MASK	equ	%00000100
+MFP_A_TRANSMIT_BIT	equ	       1
+MFP_A_TRANSMIT_MASK	equ	%00000010
+MFP_A_TIMERB_BIT	equ	        0
+MFP_A_TIMERB_MASK	equ	%00000001
+
+;割り込みイネーブルレジスタB
+;	-|VDISP|TIMERC|TIMERD|OPMIRQ|POWER|EXPWON|ALARM
+;	1=許可
+;	0でIPRBも0に
+MFP_IERB		equ	$00E88009
+MFP_B_VDISP_BIT		equ	  6
+MFP_B_VDISP_MASK	equ	%01000000
+MFP_B_TIMERC_BIT	equ	   5
+MFP_B_TIMERC_MASK	equ	%00100000
+MFP_B_TIMERD_BIT	equ	    4
+MFP_B_TIMERD_MASK	equ	%00010000
+MFP_B_OPMIRQ_BIT	equ	     3
+MFP_B_OPMIRQ_MASK	equ	%00001000
+MFP_B_POWER_BIT		equ	      2
+MFP_B_POWER_MASK	equ	%00000100
+MFP_B_EXPWON_BIT	equ	       1
+MFP_B_EXPWON_MASK	equ	%00000010
+MFP_B_ALARM_BIT		equ	        0
+MFP_B_ALARM_MASK	equ	%00000001
+
+;割り込みペンディングレジスタA
+;	HSYNC|RINT|TIMERA|FULL|RECEIVE|EMPTY|TRANSMIT|TIMERB
+;	1=発生～受付
+;	該当ビットのみ0でクリア
+MFP_IPRA		equ	$00E8800B
+
+;割り込みペンディングレジスタB
+;	-|VDISP|TIMERC|TIMERD|OPMIRQ|POWER|EXPWON|ALARM
+;	1=発生～受付
+;	該当ビットのみ0でクリア
+MFP_IPRB		equ	$00E8800D
+
+;割り込みインサービスレジスタA
+;	HSYNC|RINT|TIMERA|FULL|RECEIVE|EMPTY|TRANSMIT|TIMERB
+;	1=受付～終了
+;	該当ビットのみ0でクリア
+MFP_ISRA		equ	$00E8800F
+
+;割り込みインサービスレジスタB
+;	-|VDISP|TIMERC|TIMERD|OPMIRQ|POWER|EXPWON|ALARM
+;	1=受付～終了
+;	該当ビットのみ0でクリア
+MFP_ISRB		equ	$00E88011
+
+;割り込みマスクレジスタA
+;	HSYNC|RINT|TIMERA|FULL|RECEIVE|EMPTY|TRANSMIT|TIMERB
+;	1=許可
+MFP_IMRA		equ	$00E88013
+
+;割り込みマスクレジスタB
+;	-|VDISP|TIMERC|TIMERD|OPMIRQ|POWER|EXPWON|ALARM
+;	1=許可
+MFP_IMRB		equ	$00E88015
+
+;ベクタレジスタ
+;	ベクタ####|自動|---
+MFP_VECTOR		equ	$00E88017
+
+;タイマAコントロールレジスタ
+;	---|リセットA|イベントA|プリスケールA###(停止/1/2.5/4/12.5/16/25/50us)
+MFP_TACR		equ	$00E88019
+MFP_STOP		equ	0	;停止
+MFP_1US			equ	1	;1/4プリスケール 1MHz 1us
+MFP_2_5US		equ	2	;1/10プリスケール 400kHz 2.5us
+MFP_4US			equ	3	;1/16プリスケール 250kHz 4us
+MFP_12_5US		equ	4	;1/50プリスケール 80kHz 12.5us
+MFP_16US		equ	5	;1/64プリスケール 62.5kHz 16us
+MFP_25US		equ	6	;1/100プリスケール 40kHz 25us
+MFP_50US		equ	7	;1/200プリスケール 20kHz 50us
+MFP_EVENT_MASK		equ	8	;Timer-Aイベントカウントモード
+MFP_RESET_MASK		equ	16	;Timer-A／Timer-Bリセット
+
+;タイマBコントロールレジスタ
+;	---|リセットB|イベントB|プリスケールB###(停止/1/2.5/4/12.5/16/25/50us)
+MFP_TBCR		equ	$00E8801B
+
+;タイマC,Dコントロールレジスタ
+;	-|プリスケールC###(停止/1/2.5/4/12.5/16/25/50us)|-|プリスケールD###)
+MFP_TCDCR		equ	$00E8801D
+
+;タイマAデータレジスタ
+MFP_TADR		equ	$00E8801F
+
+;タイマBデータレジスタ
+MFP_TBDR		equ	$00E88021
+
+;タイマCデータレジスタ
+MFP_TCDR		equ	$00E88023
+
+;タイマDデータレジスタ
+MFP_TDDR		equ	$00E88025
+
+;同期キャラクタレジスタ
+MFP_SYNC_CHAR		equ	$00E88027
+
+;USARTコントロールレジスタ
+MFP_UCR			equ	$00E88029
+
+;受信ステータスレジスタ
+MFP_RSR			equ	$00E8802B
+
+;送信ステータスレジスタ
+;	バッファエンプティ|-------
+MFP_TSR			equ	$00E8802D
+
+;USARTデータレジスタ
+MFP_UDR			equ	$00E8802F
+
+;割り込みベクタ番号
+MFP_ALARM_INTERRUPT	equ	$40	;B0 GPIP0 RTC ALARM
+MFP_EXPWON_INTERRUPT	equ	$41	;B1 GPIP1 EXPWON
+MFP_POWER_INTERRUPT	equ	$42	;B2 GPIP2 POWER
+MFP_OPMIRQ_INTERRUPT	equ	$43	;B3 GPIP3 OPM IRQ
+MFP_TIMERD_INTERRUPT	equ	$44	;B4 Timer-D バックグラウンドスレッド
+MFP_TIMERC_INTERRUPT	equ	$45	;B5 Timer-C マウス処理／テキストカーソル／FDDモーターOFF／稼働時間計測
+MFP_VDISP_INTERRUPT	equ	$46	;B6 GPIP4 CRTC V-DISP
+					;B7 GPIP5 (RTC CLKOUT)
+MFP_TIMERB_INTERRUPT	equ	$48	;A0 Timer-B キーボードシリアルクロック
+MFP_TRANSMIT_INTERRUPT	equ	$49	;A1 キーボードシリアル出力エラー
+MFP_EMPTY_INTERRUPT	equ	$4A	;A2 キーボードシリアル出力空
+MFP_RECEIVE_INTERRUPT	equ	$4B	;A3 キーボードシリアル入力エラー
+MFP_FULL_INTERRUPT	equ	$4C	;A4 キーボードシリアル入力あり
+MFP_TIMERA_INTERRUPT	equ	$4D	;A5 Timer-A V-DISPイベントカウント
+MFP_RINT_INTERRUPT	equ	$4E	;A6 GPIP6 CRTC IRQ
+MFP_HSYNC_INTERRUPT	equ	$4F	;A7 GPIP7 CRTC H-SYNC
+
+  .endif  ;__mfp_equ__
+	.list

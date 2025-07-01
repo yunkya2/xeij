@@ -1,0 +1,298 @@
+	.nlist
+  .ifndef __misc_mac__
+__misc_mac__	equ	1
+
+	.include	doscall.mac
+	.nlist
+	.include	dosconst.equ
+	.nlist
+	.include	sysport.equ
+	.nlist
+
+;----------------------------------------------------------------
+;
+;	いろいろ
+;
+;----------------------------------------------------------------
+
+;----------------------------------------------------------------
+;68000か
+;	スケールファクタが無視されたら68010以下、さもなくば68020以上
+;	MOVEM.wl <list>,-(Ar)で<list>にArが含まれるとき実行前のArが書き込まれたら68010以下、さもなくば68020以上
+;>dn.l:(dnを指定したとき)0=68010以下,1=68020以上
+;>z:eq=68010以下,ne=68020以上
+is68000	.macro	dn
+	.sizem	sz,cn
+  .if cn				;is68000 dn
+	.cpu	68020
+@base:
+	moveq.l	#1,dn
+	and.b	(@base-1,pc,dn.l*2),dn
+	.cpu	68000
+  .else					;is68000
+	movem.l	sp,-(sp)
+	cmpa.l	(sp)+,sp
+  .endif
+	.endm
+
+;----------------------------------------------------------------
+;SASI内蔵機か
+;	$00E9602Dが$FFならばSASI内蔵機、さもなくばSCSI内蔵機
+;	SASI内蔵機の$00E9602DはSASIリセットポート$00E96005のゴースト。ライトオンリーでリードは常に$FF
+;	SCSI内蔵機の$00E9602DはSPCステータスポート。フルとエンプティは同時にセットされないので$FFにならない
+;	どちらの場合もSASIバス、SCSIバスに影響を与えずリードできる
+;	スーパーバイザモードで用いること
+;	追加
+;	X68000_MiSTerはSASI内蔵機だが$00E9602Dが$00なので$00もSASI内蔵機と見なす
+;	SPCステータスポートのビジーとエンプティは同時にクリアされないので$00にならない
+;>z:eq=SASI内蔵機,ne=SCSI内蔵機
+isSASI	.macro
+	cmpi.b	#$FF,$00E9602D		;$FF=SASI内蔵機,その他=SCSI内蔵機
+  .if 1
+	beq	@sasi
+	tst.b	$00E9602D
+@sasi:
+  .endif
+	.endm
+
+;----------------------------------------------------------------
+;X68030か
+;	$00E8E00Bが$DCならばX68030、さもなくばX68000
+;	スーパーバイザモードで用いること
+;>z:eq=X68030,ne=X68000
+isX68030	.macro
+	cmpi.b	#$DC,SYSPORT_MODEL
+	.endm
+
+;----------------------------------------------------------------
+;スーパーバイザモードとユーザモード
+;	supervisormodeとusermodeを対で使うこと
+;	ネストできる
+;?d0.l
+supervisormode	.macro
+	clr.l	-(sp)
+	DOS	_SUPER
+	move.l	d0,(sp)
+	.endm
+usermode	.macro
+	cmpi.l	#ALREADY_SUPERVISOR,(sp)
+	beq	@nested
+	DOS	_SUPER
+@nested:
+	addq.l	#4,sp
+	.endm
+
+;----------------------------------------------------------------
+;割り込み禁止と割り込み許可
+;	diとeiを対で使うこと
+;	ネストできる
+di	.macro
+	move.w	sr,-(sp)
+	ori.w	#$0700,sr
+	.endm
+ei	.macro
+	move.w	(sp)+,sr
+	.endm
+
+;----------------------------------------------------------------
+;SRAM書き込み許可とSRAM書き込み禁止
+;	unlocksramとlocksramを対で使うこと
+;	ネストさせないこと
+unlocksram	.macro
+	move.b	#$31,SYSPORT_SRAM	;SRAM書き込み制御。$31=許可,その他=禁止
+	.endm
+locksram	.macro
+	clr.b	SYSPORT_SRAM		;SRAM書き込み制御。$31=許可,その他=禁止
+	.endm
+
+;----------------------------------------------------------------
+;lea.l <ea>,dn
+leadn	.macro	ea,dn
+	exg.l	dn,a0
+	lea.l	ea,a0
+	exg.l	dn,a0
+	.endm
+
+;----------------------------------------------------------------
+;文字列
+leastr	.macro	str,an
+	lea.l	@str(pc),an
+	bra	@next
+@str:
+	.dc.b	str,0
+	.even
+@next:
+	.endm
+
+peastr	.macro	str
+	pea.l	@str(pc)
+	bra	@next
+@str:
+	.dc.b	str,0
+	.even
+@next:
+	.endm
+
+;----------------------------------------------------------------
+;movestr <'str'>,dst
+movestr	.macro	str,dst
+	bsr	@pop
+	.dc.b	str,0
+	.even
+@pop:
+	move.l	(sp)+,dst
+	.endm
+
+;pushstr <'str'>
+pushstr	.macro	str
+	bsr	@pop
+	.dc.b	str,0
+	.even
+@pop:
+	.endm
+
+;----------------------------------------------------------------
+;データセクション文字列
+leastrdata	.macro	str,an
+	.data
+@str:
+	.dc.b	str,0
+	.text
+	lea.l	@str,an
+	.endm
+
+peastrdata	.macro	str
+	.data
+@str:
+	.dc.b	str,0
+	.text
+	pea.l	@str
+	.endm
+
+;----------------------------------------------------------------
+;bsccとbsncc
+;	ccまたはnccがtrueのときbset、falseのときbclr
+  .irp %cc,hi,ls,cc,hs,cs,lo,ne,nz,eq,ze,vc,vs,pl,mi,ge,lt,gt,le
+bs%cc	.macro	src,dst
+	.sizem	sz
+	b%cc	@set
+	bclr&&sz	src,dst
+	bra	@end
+
+@set:
+	bset&&sz	src,dst
+@end:
+	.endm
+bsn%cc	.macro	src,dst
+	.sizem	sz
+	bn%cc	@set
+	bclr&&sz	src,dst
+	bra	@end
+
+@set:
+	bset&&sz	src,dst
+@end:
+	.endm
+  .endm
+
+;----------------------------------------------------------------
+;movejmpとmovejsr
+movejmp	.macro	ea
+	move.l	ea,-(sp)
+	rts
+	.endm
+movejsr	.macro	ea
+	pea.l	@ret
+	move.l	ea,-(sp)		;eaがd16(sp)のとき4+d16(sp)と書かなければならない
+	rts
+@ret:
+	.endm
+
+;----------------------------------------------------------------
+;色
+
+setrgb	.macro	sym,rr,gg,bb
+sym = (gg)<<11|(rr)<<6|(bb)<<1
+	.endm
+
+;	h	色相	0～31		赤～黄
+;			32～63		黄～緑
+;			64～95		緑～水
+;			96～127		水～青
+;			128～159	青～紫
+;			160～191	紫～赤
+;	s	彩度	0～31		白～原色
+;	v	明度	0～31		黒～原色
+sethsv	.macro	sym,hh,ss,vv
+@hh = (hh)
+@ss = (ss)
+@vv = (vv)
+@ii = @hh>>5
+@ff = @hh.and.31
+  .if	@ss=0
+	setrgb	sym,@vv,@vv,@vv
+  .else
+@ww = @vv*(31-@ss)/31
+@xx = @vv*(31*31-@ss*@ff)/(31*31)
+@yy = @vv*(31*31-@ss*(31-@ff))/(31*31)
+    .if @ii=0
+	setrgb	sym,@vv,@yy,@ww
+    .elif @ii=1
+	setrgb	sym,@xx,@vv,@ww
+    .elif @ii=2
+	setrgb	sym,@ww,@vv,@yy
+    .elif @ii=3
+	setrgb	sym,@ww,@xx,@vv
+    .elif @ii=4
+	setrgb	sym,@yy,@ww,@vv
+    .else
+	setrgb	sym,@vv,@ww,@xx
+    .endif
+  .endif
+	.endm
+
+dcrgb	.macro	rr,gg,bb
+	setrgb	@rgb,rr,gg,bb
+	.dc.w	@rgb
+	.endm
+
+dchsv	.macro	hh,ss,vv
+	sethsv	@rgb,hh,ss,vv
+	.dc.w	@rgb
+	.endm
+
+movergb	.macro	rr,gg,bb,dst
+	setrgb	@rgb,rr,gg,bb
+	move.w	#@rgb,dst
+	.endm
+
+movehsv	.macro	hh,ss,vv,dst
+	sethsv	@rgb,hh,ss,vv
+	move.w	#@rgb,dst
+	.endm
+
+;----------------------------------------------------------------
+;ビットマップシンボル
+;	________	equ	0
+;	_______M	equ	1
+;	______M_	equ	2
+;	______MM	equ	3
+;	    :
+;	MMMMMM__	equ	252
+;	MMMMMM_M	equ	253
+;	MMMMMMM_	equ	254
+;	MMMMMMMM	equ	255
+~defbm	.macro	m,n,a
+  .if m<256
+	~defbm	m*2,n,_&a
+	~defbm	m*2,m+n,M&a
+  .else
+a	equ	n
+  .endif
+	.endm
+	~defbm	1,0
+
+;----------------------------------------------------------------
+
+  .endif  ;__misc_mac__
+	.list

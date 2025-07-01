@@ -1,0 +1,243 @@
+	.nlist
+  .ifndef __iocscall_mac__
+__iocscall_mac__	equ	1
+
+;----------------------------------------------------------------
+;
+;	IOCSコール
+;
+;----------------------------------------------------------------
+
+_B_KEYINP	equ	$00		;キー入力(入力があるまで待つ,入力したデータはバッファから取り除く)
+_B_KEYSNS	equ	$01		;キーセンス(入力がなくても待たない,入力したデータをバッファから取り除かない)
+_B_SFTSNS	equ	$02		;シフトキーとLEDの状態の取得
+_KEY_INIT	equ	$03		;キーボードインタフェイスの初期化
+_BITSNS		equ	$04		;キーの押し下げ状態の取得
+_SKEYSET	equ	$05		;キー入力エミュレーション
+_LEDCTRL	equ	$06		;キーボードのLEDの状態をまとめて設定
+_LEDSET		equ	$07		;キーのLEDを再設定する
+_KEYDLY		equ	$08		;キーリピートのディレイタイム設定
+_KEYREP		equ	$09		;キーリピートのインターバル設定
+_OPT2TVON	equ	$0A		;OPT.2キーによるテレビコントロールを許可
+_OPT2TVOFF	equ	$0B		;OPT.2キーによるテレビコントロールを禁止
+_TVCTRL		equ	$0C		;テレビコントロール
+_LEDMOD		equ	$0D		;キーのLEDを設定
+_TGUSEMD	equ	$0E		;画面の使用状態の取得と設定
+_DEFCHR		equ	$0F		;フォントパターン設定
+_CRTMOD		equ	$10		;画面モードの取得と設定
+_CONTRAST	equ	$11		;コントラストの取得と設定
+_HSVTORGB	equ	$12		;HSVからRGBを求める
+_TPALET		equ	$13		;テキストパレットの取得と設定
+_TPALET2	equ	$14		;テキストパレットの取得と設定(全色独立)
+_TCOLOR		equ	$15		;テキスト表示プレーンの設定
+_FNTADR		equ	$16		;フォントアドレスの取得
+_VRAMGET	equ	$17		;VRAMからバッファへバイト単位で転送
+_VRAMPUT	equ	$18		;バッファからVRAMへバイト単位で転送
+_FNTGET		equ	$19		;フォントパターンの取得
+_TEXTGET	equ	$1A		;テキストVRAMからバッファへドット単位で転送
+_TEXTPUT	equ	$1B		;バッファからテキストVRAMへドット単位で転送
+_CLIPPUT	equ	$1C		;バッファからテキストVRAMへドット単位で転送(クリッピングあり)
+_SCROLL		equ	$1D		;テキスト/グラフィックのスクロール位置の取得と設定
+_B_CURON	equ	$1E		;テキストカーソルON
+_B_CUROFF	equ	$1F		;テキストカーソルOFF
+_B_PUTC		equ	$20		;テキスト1文字表示
+_B_PRINT	equ	$21		;テキスト文字列表示
+_B_COLOR	equ	$22		;テキストカラーコード設定
+_B_LOCATE	equ	$23		;テキストカーソル位置設定
+_B_DOWN_S	equ	$24		;テキストカーソルを下へ1行移動(移動できないときスクロールする)
+_B_UP_S		equ	$25		;テキストカーソルを上へ1行移動(移動できないときスクロールする)
+_B_UP		equ	$26		;テキストカーソルを上へn行移動(移動できないときはエラー)
+_B_DOWN		equ	$27		;テキストカーソルを下へn行移動(移動できないときは最下行で止まる)
+_B_RIGHT	equ	$28		;テキストカーソルをn桁右へ移動(移動できないときは右端で止まる)
+_B_LEFT		equ	$29		;テキストカーソルをn桁左へ移動(移動できないときは左端で止まる)
+_B_CLR_ST	equ	$2A		;テキスト画面クリア(クリアする範囲を選択)
+_B_ERA_ST	equ	$2B		;テキスト行クリア(クリアする範囲を選択)
+_B_INS		equ	$2C		;テキストカーソル行から下にn行空行を挿入
+_B_DEL		equ	$2D		;テキストカーソル行からn行削除
+_B_CONSOL	equ	$2E		;テキスト表示範囲を設定
+_B_PUTMES	equ	$2F		;テキスト画面の指定位置に文字列表示
+_SET232C	equ	$30		;RS-232C通信モードと通信速度の取得と設定
+_LOF232C	equ	$31		;RS-232C受信バッファ内のデータ数の取得
+_INP232C	equ	$32		;RS-232C受信(受信があるまで待つ,受信バッファから取り除く)
+_ISNS232C	equ	$33		;RS-232C受信センス(受信がなくても待たない,受信バッファから取り除かない)
+_OSNS232C	equ	$34		;RS-232C送信ステータスチェック
+_OUT232C	equ	$35		;RS-232C送信(送信可能になるまで待つ)
+_MS_VCS		equ	$36		;マウス受信データ処理の設定
+_EXESC		equ	$37		;拡張ESCシーケンス処理ルーチンの設定
+_CHR_ADR	equ	$38		;外字フォントアドレスの設定
+_SETBEEP	equ	$39		;BEEP処理の設定
+_SETPRN		equ	$3A		;プリンタ環境の設定
+_JOYGET		equ	$3B		;ジョイスティックの状態の取得
+_INIT_PRN	equ	$3C		;プリンタ初期化
+_SNSPRN		equ	$3D		;プリンタ出力センス
+_OUTLPT		equ	$3E		;プリンタ出力(LPT)
+_OUTPRN		equ	$3F		;プリンタ出力(PRN)
+_B_SEEK		equ	$40		;シーク
+_B_VERIFY	equ	$41		;ベリファイ
+_B_READDI	equ	$42		;診断のための読み出し
+_B_DSKINI	equ	$43		;初期化
+_B_DRVSNS	equ	$44		;ステータスを取得
+_B_WRITE	equ	$45		;書き込み
+_B_READ		equ	$46		;読み出し
+_B_RECALI	equ	$47		;トラック0へのシーク
+_B_ASSIGN	equ	$48		;代替トラックの設定
+_B_WRITED	equ	$49		;破損データの書き込み
+_B_READID	equ	$4A		;ID情報を読む
+_B_BADFMT	equ	$4B		;破損トラックの破棄
+_B_READDL	equ	$4C		;破損データの読み出し
+_B_FORMAT	equ	$4D		;物理フォーマット
+_B_DRVCHK	equ	$4E		;状態の取得と設定
+_B_EJECT	equ	$4F		;イジェクト／シッピング
+_DATEBCD	equ	$50		;日付を時計にセットできる形式に変換する
+_DATESET	equ	$51		;時計に日付を設定する
+_TIMEBCD	equ	$52		;時刻を時計にセットできる形式に変換する
+_TIMESET	equ	$53		;時計に時刻を設定する
+_DATEGET	equ	$54		;時計から日付を読み出す
+_DATEBIN	equ	$55		;日付をBCDからバイナリに変換する
+_TIMEGET	equ	$56		;時計から時刻を読み出す
+_TIMEBIN	equ	$57		;時刻をBCDからバイナリに変換する
+_DATECNV	equ	$58		;日付を表す文字列をバイナリに変換する
+_TIMECNV	equ	$59		;時刻を表す文字列をバイナリに変換する
+_DATEASC	equ	$5A		;日付をバイナリから文字列に変換する
+_TIMEASC	equ	$5B		;時刻をバイナリから文字列に変換する
+_DAYASC		equ	$5C		;曜日をバイナリから文字列に変換する
+_ALARMMOD	equ	$5D		;アラームの禁止/許可
+_ALARMSET	equ	$5E		;アラーム起動の時間と処理内容の設定
+_ALARMGET	equ	$5F		;アラーム起動の時間と処理内容の取得
+_ADPCMOUT	equ	$60		;ADPCM再生
+_ADPCMINP	equ	$61		;ADPCM録音
+_ADPCMAOT	equ	$62		;アレイチェーンによるADPCM再生
+_ADPCMAIN	equ	$63		;アレイチェーンによるADPCM録音
+_ADPCMLOT	equ	$64		;リンクアレイチェーンによるADPCM再生
+_ADPCMLIN	equ	$65		;リンクアレイチェーンによるADPCM録音
+_ADPCMSNS	equ	$66		;ADPCMの実行モードセンス
+_ADPCMMOD	equ	$67		;ADPCMの実行制御
+_OPMSET		equ	$68		;FM音源レジスタの設定
+_OPMSNS		equ	$69		;FM音源のステータス取得
+_OPMINTST	equ	$6A		;FM音源割り込み処理ルーチンの設定
+_TIMERDST	equ	$6B		;Timer-D割り込み処理ルーチンの設定
+_VDISPST	equ	$6C		;Timer-A(垂直同期カウント)割り込み処理ルーチンの設定
+_CRTCRAS	equ	$6D		;CRTCラスタ割り込み処理ルーチンの設定
+_HSYNCST	equ	$6E		;水平同期割り込み処理ルーチンの設定
+_PRNINTST	equ	$6F		;プリンタのレディー割り込み処理ルーチンの設定
+_MS_INIT	equ	$70		;マウス処理を初期化する
+_MS_CURON	equ	$71		;マウスカーソルを表示する
+_MS_CUROF	equ	$72		;マウスカーソルを消去する
+_MS_STAT	equ	$73		;マウスカーソルの表示状態を取得する
+_MS_GETDT	equ	$74		;マウスの状態を取得する
+_MS_CURGT	equ	$75		;マウスカーソルの座標を取得する
+_MS_CURST	equ	$76		;マウスカーソルの座標を設定する
+_MS_LIMIT	equ	$77		;マウスカーソルの移動範囲を設定する
+_MS_OFFTM	equ	$78		;マウスのボタンが離されるまでの時間を計る
+_MS_ONTM	equ	$79		;マウスのボタンが押されるまでの時間を計る
+_MS_PATST	equ	$7A		;マウスカーソルパターンを定義する
+_MS_SEL		equ	$7B		;マウスカーソルを選ぶ
+_MS_SEL2	equ	$7C		;マウスカーソルアニメーションの設定
+_SKEY_MOD	equ	$7D		;ソフトキーボードの表示モードの取得と設定
+_DENSNS		equ	$7E		;電卓センス
+_ONTIME		equ	$7F		;起動後の経過時間(1/100秒単位)を求める
+_B_INTVCS	equ	$80		;例外処理またはIOCSコールベクタ設定
+_B_SUPER	equ	$81		;スーパーバイザモード切り替え
+_B_BPEEK	equ	$82		;メモリ読み出し(1バイト)
+_B_WPEEK	equ	$83		;メモリ読み出し(1ワード)
+_B_LPEEK	equ	$84		;メモリ読み出し(1ロングワード)
+_B_MEMSTR	equ	$85		;メモリ間転送(a1からa2へ)
+_B_BPOKE	equ	$86		;メモリ書き込み(1バイト)
+_B_WPOKE	equ	$87		;メモリ書き込み(1ワード)
+_B_LPOKE	equ	$88		;メモリ書き込み(1ロングワード)
+_B_MEMSET	equ	$89		;メモリ間転送(a2からa1へ)
+_DMAMOVE	equ	$8A		;DMA転送
+_DMAMOV_A	equ	$8B		;アレイチェーンによるDMA転送
+_DMAMOV_L	equ	$8C		;リンクアレイチェーンによるDMA転送
+_DMAMODE	equ	$8D		;DMA転送中モードの取得
+_BOOTINF	equ	$8E		;起動情報の取得
+_ROMVER		equ	$8F		;ROMバージョンの取得
+_G_CLR_ON	equ	$90		;グラフィック画面の消去とパレット初期化と表示ON
+_G_MOD		equ	$91		;グラフィック画面モードの設定
+_PRIORITY	equ	$92		;画面間およびグラフィックページ間のプライオリティの設定
+_CRTMOD2	equ	$93		;画面表示のON/OFFと特殊モードの設定
+_GPALET		equ	$94		;グラフィックパレットの取得と設定
+_PENCOLOR	equ	$95		;ペンカラーの設定
+_SET_PAGE	equ	$96		;グラフィック描画ページの設定
+_GGET		equ	$97		;グラフィック画面からパターン読み出し
+_MASK_GPUT	equ	$98		;グラフィック画面にパターン書き込み(スルーカラー指定)
+_GPUT		equ	$99		;グラフィック画面にパターン書き込み
+_GPTRN		equ	$9A		;グラフィック画面にビットパターン書き込み
+_BK_GPTRN	equ	$9B		;グラフィック画面にビットパターン書き込み(バックカラー指定)
+_X_GPTRN	equ	$9C		;グラフィック画面にビットパターン書き込み(拡大指定)
+
+_SFTJIS		equ	$A0		;SJIS→JIS変換
+_JISSFT		equ	$A1		;JIS→SJIS変換
+_AKCONV		equ	$A2		;半角(ANK)→全角(SJIS)変換
+_RMACNV		equ	$A3		;ローマ字かな変換
+_DAKJOB		equ	$A4		;濁点処理(直前の文字に゛を付ける)
+_HANJOB		equ	$A5		;半濁点処理(直前の文字に゜を付ける)
+
+_SYS_STAT	equ	$AC		;システム環境の取得と設定
+_B_CONMOD	equ	$AD		;テキスト画面のカーソルとスクロールの設定
+_OS_CURON	equ	$AE		;カーソル表示
+_OS_CUROF	equ	$AF		;カーソル非表示(_B_CURONによる表示も禁止)
+_DRAWMODE	equ	$B0		;グラフィック画面の描画モードの取得と設定
+_APAGE		equ	$B1		;グラフィック画面の描画ページの取得と設定
+_VPAGE		equ	$B2		;グラフィック画面の表示ページの設定
+_HOME		equ	$B3		;グラフィック画面のスクロール位置の設定
+_WINDOW		equ	$B4		;グラフィック画面のクリッピングエリアを設定する
+_WIPE		equ	$B5		;グラフィック画面をパレットコード0で塗り潰す
+_PSET		equ	$B6		;グラフィック画面に点を描く
+_POINT		equ	$B7		;グラフィック画面の1点のパレットコードを得る
+_LINE		equ	$B8		;グラフィック画面に線分を描く
+_BOX		equ	$B9		;グラフィック画面に矩形を描く
+_FILL		equ	$BA		;グラフィック画面の矩形塗り潰し
+_CIRCLE		equ	$BB		;グラフィック画面に円または楕円を描く
+_PAINT		equ	$BC		;グラフィック画面の閉領域の塗り潰し
+_SYMBOL		equ	$BD		;グラフィック画面に文字列表示
+_GETGRM		equ	$BE		;グラフィック画面の読み出し
+_PUTGRM		equ	$BF		;グラフィック画面の書き込み
+_SP_INIT	equ	$C0		;スプライトとBGの初期化
+_SP_ON		equ	$C1		;スプライト表示ON
+_SP_OFF		equ	$C2		;スプライト表示OFF
+_SP_CGCLR	equ	$C3		;スプライトパターンのクリア(16x16)
+_SP_DEFCG	equ	$C4		;スプライトパターンの設定
+_SP_GTPCG	equ	$C5		;スプライトパターンの取得
+_SP_REGST	equ	$C6		;スプライトレジスタの設定
+_SP_REGGT	equ	$C7		;スプライトレジスタの取得
+_BGSCRLST	equ	$C8		;BGスクロールレジスタの設定
+_BGSCRLGT	equ	$C9		;BGスクロールレジスタの取得
+_BGCTRLST	equ	$CA		;BGコントロールレジスタの設定
+_BGCTRLGT	equ	$CB		;BGコントロールレジスタの取得
+_BGTEXTCL	equ	$CC		;BGテキストのクリア
+_BGTEXTST	equ	$CD		;BGテキストの設定
+_BGTEXTGT	equ	$CE		;BGテキストの取得
+_SPALET		equ	$CF		;スプライトパレットの取得と設定
+
+_TXXLINE	equ	$D3		;テキスト画面に水平線を描画
+_TXYLINE	equ	$D4		;テキスト画面に垂直線を描画
+_TXLINE		equ	$D5		;テキスト画面に直線を描画
+_TXBOX		equ	$D6		;テキスト画面に矩形の枠を描画
+_TXFILL		equ	$D7		;テキスト画面に矩形を描画
+_TXREV		equ	$D8		;テキスト画面の矩形を反転
+
+_TXRASCPY	equ	$DF		;テキストラスタブロックコピー
+
+_OPMDRV		equ	$F0		;OPMDRV.X/OPMDRV2.X/OPMDRV3.X
+_RSDRV		equ	$F1		;RSDRV.SYS
+_A_JOY		equ	$F2		;AJOY.X
+_MUSICDRV	equ	$F3		;MUSICDRV.X/OPMDRV3.X
+
+_SCSIDRV	equ	$F5		;SCSI
+
+_TS16DRV	equ	$F8		;HIMEM.SYS/TS16DRV.X
+
+_ROMDB_CMD	equ	$FB		;ROMデバッガコマンド拡張
+_ROMDB_ASM	equ	$FC		;ROMデバッガアセンブラ拡張
+_ABORTRST	equ	$FD		;アボート準備
+_IPLERR		equ	$FE		;起動失敗
+_ABORTJOB	equ	$FF		;アボート実行
+
+IOCS	.macro	num
+	moveq.l	#num,d0
+	trap	#15
+	.endm
+
+  .endif  ;__iocscall_mac__
+	.list

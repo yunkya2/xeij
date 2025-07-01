@@ -1,0 +1,137 @@
+	.nlist
+  .ifndef __vector_equ__
+__vector_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	例外ベクタオフセット
+;
+;----------------------------------------------------------------
+
+OFFSET_RESET_SSP		equ	$0000	;例外ベクタ$00 リセットSSP
+OFFSET_RESET_PC			equ	$0004	;例外ベクタ$01 リセットPC
+OFFSET_BUS_ERROR		equ	$0008	;例外ベクタ$02 バスエラー
+OFFSET_ADDRESS_ERROR		equ	$000C	;例外ベクタ$03 アドレスエラー
+OFFSET_ILLEGAL_INSTRUCTION	equ	$0010	;例外ベクタ$04 不当命令
+OFFSET_DIVIDE_BY_ZERO		equ	$0014	;例外ベクタ$05 ゼロ除算
+OFFSET_CHK_INSTRUCTION		equ	$0018	;例外ベクタ$06 CHK命令
+OFFSET_TRAPV_INSTRUCTION	equ	$001C	;例外ベクタ$07 TRAPV命令
+OFFSET_PRIVILEGE_VIOLATION	equ	$0020	;例外ベクタ$08 特権違反
+OFFSET_TRACE			equ	$0024	;例外ベクタ$09 トレース
+OFFSET_LINE_1010_EMULATOR	equ	$0028	;例外ベクタ$0A ライン1010エミュレータ
+OFFSET_LINE_1111_EMULATOR	equ	$002C	;例外ベクタ$0B ライン1111エミュレータ
+OFFSET_EMULATOR_INTERRUPT	equ	$0030	;例外ベクタ$0C エミュレータ割り込み
+OFFSET_COPROCESSOR_PROTOCOL	equ	$0034	;例外ベクタ$0D コプロセッサプロトコル違反
+OFFSET_FORMAT_ERROR		equ	$0038	;例外ベクタ$0E フォーマットエラー
+OFFSET_UNINITIALIZED_INTERRUPT	equ	$003C	;例外ベクタ$0F 未初期化割り込み
+
+OFFSET_SPURIOUS_INTERRUPT	equ	$0060	;例外ベクタ$18 スプリアス割り込み
+OFFSET_LEVEL_1_INTERRUPT	equ	$0064	;例外ベクタ$19 レベル1割り込みオートベクタ(IOI)
+OFFSET_LEVEL_2_INTERRUPT	equ	$0068	;例外ベクタ$1A レベル2割り込みオートベクタ(拡張I/Oスロット)
+OFFSET_LEVEL_3_INTERRUPT	equ	$006C	;例外ベクタ$1B レベル3割り込みオートベクタ(DMA)
+OFFSET_LEVEL_4_INTERRUPT	equ	$0070	;例外ベクタ$1C レベル4割り込みオートベクタ(拡張I/Oスロット)
+OFFSET_LEVEL_5_INTERRUPT	equ	$0074	;例外ベクタ$1D レベル5割り込みオートベクタ(SCC)
+OFFSET_LEVEL_6_INTERRUPT	equ	$0078	;例外ベクタ$1E レベル6割り込みオートベクタ(MFP)
+OFFSET_LEVEL_7_INTERRUPT	equ	$007C	;例外ベクタ$1F レベル7割り込みオートベクタ(NMI)
+
+OFFSET_TRAP_0			equ	$0080	;例外ベクタ$20 TRAP#0
+OFFSET_TRAP_1			equ	$0084	;例外ベクタ$21 TRAP#1(MPCM)
+OFFSET_TRAP_2			equ	$0088	;例外ベクタ$22 TRAP#2(PCM8)
+OFFSET_TRAP_3			equ	$008C	;例外ベクタ$23 TRAP#3(ZMUSIC)
+OFFSET_TRAP_4			equ	$0090	;例外ベクタ$24 TRAP#4(MXDRV)
+OFFSET_TRAP_5			equ	$0094	;例外ベクタ$25 TRAP#5(CDC)
+OFFSET_TRAP_6			equ	$0098	;例外ベクタ$26 TRAP#6
+OFFSET_TRAP_7			equ	$009C	;例外ベクタ$27 TRAP#7
+OFFSET_TRAP_8			equ	$00A0	;例外ベクタ$28 TRAP#8(ROMデバッガ)
+OFFSET_TRAP_9			equ	$00A4	;例外ベクタ$29 TRAP#9(デバッガ)
+OFFSET_TRAP_10			equ	$00A8	;例外ベクタ$2A TRAP#10(POWER OFFまたはリセット)
+OFFSET_TRAP_11			equ	$00AC	;例外ベクタ$2B TRAP#11(BREAK)
+OFFSET_TRAP_12			equ	$00B0	;例外ベクタ$2C TRAP#12(COPY)
+OFFSET_TRAP_13			equ	$00B4	;例外ベクタ$2D TRAP#13(^C)
+OFFSET_TRAP_14			equ	$00B8	;例外ベクタ$2E TRAP#14(エラー表示)
+OFFSET_TRAP_15			equ	$00BC	;例外ベクタ$2F TRAP#15(IOCSコール)
+
+OFFSET_FP_BRANCH_SET_UNORDERED	equ	$00C0	;例外ベクタ$30 FP分岐または比較不能状態でのセット
+OFFSET_FP_INEXACT_RESULT	equ	$00C4	;例外ベクタ$31 FP不正確な結果
+OFFSET_FP_DIVIDE_BY_ZERO	equ	$00C8	;例外ベクタ$32 FPゼロによる除算
+OFFSET_FP_UNDERFLOW		equ	$00CC	;例外ベクタ$33 FPアンダーフロー
+OFFSET_FP_OPERAND_ERROR		equ	$00D0	;例外ベクタ$34 FPオペランドエラー
+OFFSET_FP_OVERFLOW		equ	$00D4	;例外ベクタ$35 FPオーバーフロー
+OFFSET_FP_SIGNALING_NAN		equ	$00D8	;例外ベクタ$36 FPシグナリングNAN
+OFFSET_FP_UNSUPPORTED_DATA_TYPE	equ	$00DC	;例外ベクタ$37 FP未実装データ型
+
+OFFSET_MMU_CONFIGULATION	equ	$00E0	;例外ベクタ$38 MMUコンフィギュレーションエラー
+OFFSET_MMU_ILLEGAL_OPERATION	equ	$00E4	;例外ベクタ$39 MMU不当操作
+OFFSET_MMU_ACCESS_LEVEL		equ	$00E8	;例外ベクタ$3A MMUアクセスレベル違反
+
+OFFSET_EFFECTIVE_ADDRESS	equ	$00F0	;例外ベクタ$3C 未実装実効アドレス
+OFFSET_INTEGER_INSTRUCTION	equ	$00F4	;例外ベクタ$3D 未実装整数命令
+
+OFFSET_MFP_ALARM		equ	$0100	;割り込みベクタ$40 MFP B0 GPIP0 RTC ALARM
+OFFSET_MFP_EXPWON		equ	$0104	;割り込みベクタ$41 MFP B1 GPIP1 EXPWON
+OFFSET_MFP_POWER		equ	$0108	;割り込みベクタ$42 MFP B2 GPIP2 POWER
+OFFSET_MFP_OPMIRQ		equ	$010C	;割り込みベクタ$43 MFP B3 GPIP3 FM音源
+OFFSET_MFP_TIMERD		equ	$0110	;割り込みベクタ$44 MFP B4 Timer-D
+OFFSET_MFP_TIMERC		equ	$0114	;割り込みベクタ$45 MFP B5 Timer-C
+OFFSET_MFP_VDISP		equ	$0118	;割り込みベクタ$46 MFP B6 GPIP4 CRTC V-DISP
+OFFSET_MFP_TIMERB		equ	$0120	;割り込みベクタ$48 MFP A0 Timer-B キーボードシリアルクロック(割り込み不可)
+OFFSET_MFP_TRANSMIT_ERROR	equ	$0124	;割り込みベクタ$49 MFP A1 キーボードシリアル出力エラー
+OFFSET_MFP_TRANSMIT_EMPTY	equ	$0128	;割り込みベクタ$4A MFP A2 キーボードシリアル出力空
+OFFSET_MFP_RECEIVE_ERROR	equ	$012C	;割り込みベクタ$4B MFP A3 キーボードシリアル入力エラー
+OFFSET_MFP_RECEIVE_FULL		equ	$0130	;割り込みベクタ$4C MFP A4 キーボードシリアル入力あり
+OFFSET_MFP_TIMERA		equ	$0134	;割り込みベクタ$4D MFP A5 Timer-A(V-DISPイベントカウント)
+OFFSET_MFP_RINT			equ	$0138	;割り込みベクタ$4E MFP A6 GPIP6 CRTC IRQ
+OFFSET_MFP_HSYNC		equ	$013C	;割り込みベクタ$4F MFP A7 GPIP7 CRTC H-SYNC
+
+OFFSET_SCC_B_EMPTY		equ	$0140	;割り込みベクタ$50 SCC B 送信バッファ空(マウス送信)
+OFFSET_SCC_B_STATUS		equ	$0148	;割り込みベクタ$52 SCC B 外部/ステータス変化
+OFFSET_SCC_B_FULL		equ	$0150	;割り込みベクタ$54 SCC B 受信バッファフル(マウス受信)
+OFFSET_SCC_B_SPECIAL		equ	$0158	;割り込みベクタ$56 SCC B 特別受信条件
+OFFSET_SCC_A_EMPTY		equ	$0160	;割り込みベクタ$58 SCC A 送信バッファ空(RS-232C送信)
+OFFSET_SCC_A_STATUS		equ	$0168	;割り込みベクタ$5A SCC A 外部/ステータス変化
+OFFSET_SCC_A_FULL		equ	$0170	;割り込みベクタ$5C SCC A 受信バッファフル(RS-232C受信)
+OFFSET_SCC_A_SPECIAL		equ	$0178	;割り込みベクタ$5E SCC A 特別受信条件
+
+OFFSET_IOI_FDC			equ	$0180	;割り込みベクタ$60 IOI FDC
+OFFSET_IOI_FDD			equ	$0184	;割り込みベクタ$61 IOI FDD
+OFFSET_IOI_SASI			equ	$0188	;割り込みベクタ$62 IOI SASI
+OFFSET_IOI_PRN			equ	$018C	;割り込みベクタ$63 IOI PRN
+
+OFFSET_DMA_0_COMPLETE		equ	$0190	;割り込みベクタ$64 DMA 0 転送終了
+OFFSET_DMA_0_ERROR		equ	$0194	;割り込みベクタ$65 DMA 0 エラー
+OFFSET_DMA_1_COMPLETE		equ	$0198	;割り込みベクタ$66 DMA 1 転送終了
+OFFSET_DMA_1_ERROR		equ	$019C	;割り込みベクタ$67 DMA 1 エラー
+OFFSET_DMA_2_COMPLETE		equ	$01A0	;割り込みベクタ$68 DMA 2 転送終了
+OFFSET_DMA_2_ERROR		equ	$01A4	;割り込みベクタ$69 DMA 2 エラー
+OFFSET_DMA_3_COMPLETE		equ	$01A8	;割り込みベクタ$6A DMA 3 転送終了
+OFFSET_DMA_3_ERROR		equ	$01AC	;割り込みベクタ$6B DMA 3 エラー
+
+OFFSET_SPC_IN			equ	$01B0	;割り込みベクタ$6C 内蔵SPC
+
+OFFSET_AUX3_EMPTY		equ	$02C0	;割り込みベクタ$B0 RS-232Cボード(CZ-6BF1)#1 AUX3 送信バッファ空
+OFFSET_AUX3_STATUS		equ	$02C8	;割り込みベクタ$B2 RS-232Cボード(CZ-6BF1)#1 AUX3 外部/ステータス変化
+OFFSET_AUX3_FULL		equ	$02D0	;割り込みベクタ$B4 RS-232Cボード(CZ-6BF1)#1 AUX3 受信バッファフル
+OFFSET_AUX3_SPECIAL		equ	$02D8	;割り込みベクタ$B6 RS-232Cボード(CZ-6BF1)#1 AUX3 特別受信条件
+OFFSET_AUX2_EMPTY		equ	$02E0	;割り込みベクタ$B8 RS-232Cボード(CZ-6BF1)#1 AUX2 送信バッファ空
+OFFSET_AUX2_STATUS		equ	$02E8	;割り込みベクタ$BA RS-232Cボード(CZ-6BF1)#1 AUX2 外部/ステータス変化
+OFFSET_AUX2_FULL		equ	$02F0	;割り込みベクタ$BC RS-232Cボード(CZ-6BF1)#1 AUX2 受信バッファフル
+OFFSET_AUX2_SPECIAL		equ	$02F8	;割り込みベクタ$BE RS-232Cボード(CZ-6BF1)#1 AUX2 特別受信条件
+
+OFFSET_AUX5_EMPTY		equ	$0300	;割り込みベクタ$C0 RS-232Cボード(CZ-6BF1)#2 AUX5 送信バッファ空
+OFFSET_AUX5_STATUS		equ	$0308	;割り込みベクタ$C2 RS-232Cボード(CZ-6BF1)#2 AUX5 外部/ステータス変化
+OFFSET_AUX5_FULL		equ	$0310	;割り込みベクタ$C4 RS-232Cボード(CZ-6BF1)#2 AUX5 受信バッファフル
+OFFSET_AUX5_SPECIAL		equ	$0318	;割り込みベクタ$C6 RS-232Cボード(CZ-6BF1)#2 AUX5 特別受信条件
+OFFSET_AUX4_EMPTY		equ	$0320	;割り込みベクタ$C8 RS-232Cボード(CZ-6BF1)#2 AUX4 送信バッファ空
+OFFSET_AUX4_STATUS		equ	$0328	;割り込みベクタ$CA RS-232Cボード(CZ-6BF1)#2 AUX4 外部/ステータス変化
+OFFSET_AUX4_FULL		equ	$0330	;割り込みベクタ$CC RS-232Cボード(CZ-6BF1)#2 AUX4 受信バッファフル
+OFFSET_AUX4_SPECIAL		equ	$0338	;割り込みベクタ$CE RS-232Cボード(CZ-6BF1)#2 AUX4 特別受信条件
+
+OFFSET_ZUSB			equ	$0340	;割り込みベクタ$D0～$D7 ZUSB
+
+OFFSET_SPC_EX			equ	$03D8	;割り込みベクタ$F6 拡張SPC
+
+OFFSET_IOCS			equ	$0400	;.l[256] IOCSコールベクタテーブル
+OFFSET_DOS			equ	$1800	;.l[256] DOSコールベクタテーブル
+
+  .endif  ;__vector_equ__
+	.list

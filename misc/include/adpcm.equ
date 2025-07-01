@@ -1,0 +1,32 @@
+	.nlist
+  .ifndef __adpcm_equ__
+__adpcm_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	ADPCM
+;
+;----------------------------------------------------------------
+
+;ADPCMステータス(read)
+;	PLAYING/RECORDING|1000000
+ADPCM_STATUS		equ	$00E92001	;ADPCMステータス
+ADPCM_RECORDING_BIT	equ	 7
+ADPCM_RECORDING_MASK	equ	%10000000	;0=再生中,1=録音中
+
+;ADPCMコマンド(write)
+;	-----|RECORD|PLAY|STOP
+ADPCM_COMMAND		equ	$00E92001	;ADPCMコマンド
+ADPCM_RECORD_BIT	equ	      2
+ADPCM_RECORD_MASK	equ	%00000100	;1=録音開始
+ADPCM_PLAY_BIT		equ	       1
+ADPCM_PLAY_MASK		equ	%00000010	;1=再生開始
+ADPCM_STOP_BIT		equ	        0
+ADPCM_STOP_MASK		equ	%00000001	;1=動作終了
+
+;ADPCMデータ(read/write)
+;	SECOND_DATA####|FIRST_DATA####
+ADPCM_DATA		equ	$00E92003	;ADPCMデータ
+
+  .endif  ;__adpcm_equ__
+	.list

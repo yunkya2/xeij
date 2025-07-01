@@ -1,0 +1,218 @@
+	.nlist
+  .ifndef __spc_equ__
+__spc_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	MB89352 SPC
+;
+;----------------------------------------------------------------
+
+;ベースアドレス
+SPC_IN_BASE		equ	$00E96020	;内蔵SPCベースアドレス
+SPC_EX_BASE		equ	$00EA0000	;拡張SPCベースアドレス
+
+;レジスタ
+
+;Bus Device ID
+;	自分のID
+SPC_BDID		equ	$01
+
+;SPC Control
+;	RD|CR|DM|AE|PE|SE|RE|IE
+SPC_SCTL		equ	$03
+SPC_SCTL_RD_BIT		equ	 7
+SPC_SCTL_RD		equ	%10000000	;Reset & Disable。1=ハードウェアリセット
+SPC_SCTL_CR_BIT		equ	  6
+SPC_SCTL_CR		equ	%01000000	;Control Reset。1=転送回路リセット
+SPC_SCTL_DM_BIT		equ	   5
+SPC_SCTL_DM		equ	%00100000	;Diag Mode。1=自己診断モード
+SPC_SCTL_AE_BIT		equ	    4
+SPC_SCTL_AE		equ	%00010000	;Arbitration Enable。0=アービトレーションフェーズなし(SASI),1=あり(SCSI)
+SPC_SCTL_PE_BIT		equ	     3
+SPC_SCTL_PE		equ	%00001000	;Parity Enable。1=入力データのパリティをチェックする。出力データは常にパリティが付く
+SPC_SCTL_SE_BIT		equ	      2
+SPC_SCTL_SE		equ	%00000100	;Select Enable。0=常にイニシエータ,1=セレクションフェーズが来たらターゲットになる
+SPC_SCTL_RE_BIT		equ	       1
+SPC_SCTL_RE		equ	%00000010	;Reselect Enable。1=リセレクションフェーズに応答する
+SPC_SCTL_IE_BIT		equ	        0
+SPC_SCTL_IE		equ	%00000001	;Interrupt Enable。0=割り込み禁止。禁止されていてもINTSは変化する。1=割り込み許可
+
+;SPC Command
+;	BR/SL/RA/SA/TR/TP/RR/SR|RO|IT|PT|-|TM
+SPC_SCMD		equ	$05
+SPC_SCMD_CC_BIT		equ	   5
+SPC_SCMD_CC		equ	%11100000	;Command Code
+SPC_SCMD_CC_BR		equ	%00000000	;  0=Bus Release。ターゲットのときバスフリーフェーズへ移行
+SPC_SCMD_CC_SL		equ	%00100000	;  1=Select。セレクション/リセレクションを開始
+SPC_SCMD_CC_RA		equ	%01000000	;  2=Reset ATN。ATNをクリア
+SPC_SCMD_CC_SA		equ	%01100000	;  3=Set ATN。ATNをセット
+SPC_SCMD_CC_TR		equ	%10000000	;  4=Transfer。転送開始
+SPC_SCMD_CC_TP		equ	%10100000	;  5=Transfer Pause。転送中断
+SPC_SCMD_CC_RR		equ	%11000000	;  6=Reset ACK/REQ。CPU転送のときACK/REQをクリア
+SPC_SCMD_CC_SR		equ	%11100000	;  7=Set ACK/REQ。CPU転送のときACK/REQをセット
+SPC_SCMD_RO_BIT		equ	    4
+SPC_SCMD_RO		equ	%00010000	;RST Out。1=SCSIバスリセット
+SPC_SCMD_IT_BIT		equ	     3
+SPC_SCMD_IT		equ	%00001000	;Intercept Transfer。1=CPU転送時FIFOバッファの内容を保持
+SPC_SCMD_PT_BIT		equ	      2
+SPC_SCMD_PT		equ	%00000100	;Program Transfer
+						;  0=自動転送
+						;    DREQを使ってDREGでデータをやりとりする
+						;  1=プログラム転送
+						;    SCMDでACK/REQを操作してTEMPでデータをやりとりする
+						;  X680x0ではPEDECがDREQを使ってDREGのDTACKを作っている
+						;  プログラム転送のときDREGは常にバスエラーになる
+SPC_SCMD_TM_BIT		equ	        0
+SPC_SCMD_TM		equ	%00000001	;Termination Mode
+						;  イニシエータのとき
+						;    0=カウント0で終了する
+						;    1=カウント0で終了しない(Padding)
+						;  ターゲットのとき
+						;    0=パリティエラーがあってもカウント0まで転送する
+						;    1=パリティエラーがあると直ちに終了する
+
+;Interrupt Sense
+;	SL|RS|DC|CC|SR|TO|HE|RC
+SPC_INTS		equ	$09
+SPC_INTS_SL		equ	%10000000	;Selected。1=他のデバイスのセレクションフェーズで選択されてターゲットになった
+SPC_INTS_RS		equ	%01000000	;Reselected。1=他のデバイスのリセレクションフェーズで選択されてイニシエータになった
+SPC_INTS_DC_BIT		equ	5
+SPC_INTS_DC		equ	%00100000	;Disconnected。1=バスフリーフェーズになった。バスを使うとき0に戻すこと
+SPC_INTS_CC_BIT		equ	4
+SPC_INTS_CC		equ	%00010000	;Command Complete。1=SelectやTransferなどのコマンドが終了した。ターゲットのときパリティエラーで停止した
+SPC_INTS_SR_BIT		equ	3
+SPC_INTS_SR		equ	%00001000	;Service Required。1=PCTLレジスタとバスのフェーズが一致しないんだけどどうにかして
+SPC_INTS_TO		equ	%00000100	;Time Out
+						;  1=セレクション/リセレクションに応答がない
+						;    セレクションタイムアウトのときSELが1のままなのでTEMP=$00で復旧させる必要がある
+SPC_INTS_HE		equ	%00000010	;SPC Hard Error。1=なんかエラーが出た。SERRを見てくれ
+SPC_INTS_RC		equ	%00000001	;Reset Condition。1=SCSIバスがリセットされた(RST信号が1になった)
+
+;(Read) Phase Sense
+;	REQ|ACK|ATN|SEL|BSY|MSG|CD|IO
+SPC_PSNS		equ	$0B
+SPC_PSNS_REQ_BIT	equ	 7
+SPC_PSNS_REQ		equ	%10000000	;REQ
+SPC_PSNS_ACK_BIT	equ	  6
+SPC_PSNS_ACK		equ	%01000000	;ACK
+SPC_PSNS_ATN_BIT	equ	   5
+SPC_PSNS_ATN		equ	%00100000	;ATN
+SPC_PSNS_SEL_BIT	equ	    4
+SPC_PSNS_SEL		equ	%00010000	;SEL。1=セレクションフェーズ
+SPC_PSNS_BSY_BIT	equ	     3
+SPC_PSNS_BSY		equ	%00001000	;BSY
+SPC_PSNS_MSG_BIT	equ	      2
+SPC_PSNS_MSG		equ	%00000100	;MSG
+SPC_PSNS_CD_BIT		equ	       1
+SPC_PSNS_CD		equ	%00000010	;C/D
+SPC_PSNS_IO_BIT		equ	        0
+SPC_PSNS_IO		equ	%00000001	;I/O
+
+;(Write) SPC Diag Control
+;	REQ|ACK|XFER|-|BSY|MSG|CD|IO
+SPC_SDGC		equ	$0B
+SPC_SDGC_REQ_BIT	equ	 7
+SPC_SDGC_REQ		equ	%10000000	;Diag REQ
+SPC_SDGC_ACK_BIT	equ	  6
+SPC_SDGC_ACK		equ	%01000000	;Diag ACK
+SPC_SDGC_XFER_BIT	equ	   5
+SPC_SDGC_XFER		equ	%00100000	;Xfer Enable。1=CPU転送のときデータ転送割り込み許可
+SPC_SDGC_BSY_BIT	equ	     3
+SPC_SDGC_BSY		equ	%00001000	;Diag BSY
+SPC_SDGC_MSG_BIT	equ	      2
+SPC_SDGC_MSG		equ	%00000100	;Diag MSG
+SPC_SDGC_CD_BIT		equ	       1
+SPC_SDGC_CD		equ	%00000010	;Diag C/D
+SPC_SDGC_IO_BIT		equ	        0
+SPC_SDGC_IO		equ	%00000001	;Diag I/O
+
+;SPC Status
+;	INIT|TARG|BUSY|TRIP|SRIN|TC0|DF|DE
+SPC_SSTS		equ	$0D
+SPC_SSTS_INIT_BIT	equ	 7
+SPC_SSTS_INIT		equ	%10000000	;Connected INIT。1=イニシエータ
+SPC_SSTS_TARG_BIT	equ	  6
+SPC_SSTS_TARG		equ	%01000000	;Connected TARG。1=ターゲット
+SPC_SSTS_BUSY_BIT	equ	   5
+SPC_SSTS_BUSY		equ	%00100000	;SPC Busy。1=コマンド実行中
+SPC_SSTS_TRIP_BIT	equ	    4
+SPC_SSTS_TRIP		equ	%00010000	;Transfer in Progress。1=DMA転送中
+SPC_SSTS_SRIN_BIT	equ	     3
+SPC_SSTS_SRIN		equ	%00001000	;SCSI Reset In。RST信号の状態
+SPC_SSTS_TC0_BIT	equ	      2
+SPC_SSTS_TC0		equ	%00000100	;TC=0。1=転送カウンタが0
+SPC_SSTS_DF_BIT		equ	       1
+SPC_SSTS_DF		equ	%00000010	;DREG status Full。1=8バイトのFIFOが一杯
+SPC_SSTS_DE_BIT		equ	        0
+SPC_SSTS_DE		equ	%00000001	;DREG status Empty。1=8バイトのFIFOが空
+
+;SPC Error Status
+;	DI|DO|XO|-|PE|-|ST|-
+SPC_SERR		equ	$0F
+SPC_SERR_DI_BIT		equ	 7
+SPC_SERR_DI		equ	%10000000	;Data Error SCSI。1=入力データにパリティエラーがある
+SPC_SERR_DO_BIT		equ	  6
+SPC_SERR_DO		equ	%01000000	;Data Error SPC。1=出力データにパリティエラーがある
+SPC_SERR_XO_BIT		equ	   5
+SPC_SERR_XO		equ	%00100000	;Xfer Out。1=Xfer EnableのときData Request中
+SPC_SERR_PE_BIT		equ	     3
+SPC_SERR_PE		equ	%00001000	;TC Parity Error。1=転送カウンタにパリティエラーがある
+SPC_SERR_ST_BIT		equ	       1
+SPC_SERR_ST		equ	%00000010	;Short Transfer Period。1=REQ/ACKが速すぎてSPCが追従できない
+
+;Phase Control
+;	IE|----|DO/DI/CO/SI/-/-/MO/MI,bit0:S/R
+SPC_PCTL		equ	$11
+SPC_PCTL_IE_BIT		equ	 7
+SPC_PCTL_IE		equ	%10000000	;Busfree INT Enable。1=バスフリーフェーズを検出したらDisconnected割り込みを要求する
+SPC_PCTL_TP_BIT		equ	        0
+SPC_PCTL_TP		equ	%00000111	;Transfer Phase。転送フェーズ
+SPC_PCTL_MSG_BIT	equ	      2
+SPC_PCTL_MSG		equ	%00000100	;MSG
+SPC_PCTL_CD_BIT		equ	       1
+SPC_PCTL_CD		equ	%00000010	;C/D
+SPC_PCTL_IO_BIT		equ	        0
+SPC_PCTL_IO		equ	%00000001	;I/O。0=Out,1=In
+SPC_PCTL_SR_BIT		equ	        0
+SPC_PCTL_SR		equ	%00000001	;Selectコマンドのセレクション/リセレクション選択
+SPC_PCTL_SR_R		equ	%00000001	;  1=Selectコマンドはリセレクション
+SPC_PCTL_SR_S		equ	%00000000	;  0=Selectコマンドはセレクション
+
+;Modified Byte Counter
+SPC_MBC			equ	$13
+
+;Data Register
+;  X680x0ではPEDECがDREQを使ってDREGのDTACKを作っている
+;  DREG status FullのときDREGにライトするとバスエラーになる
+;  DREG status EmptyのときDREGからリードするとバスエラーになる
+;  プログラム転送のときDREGは常にバスエラーになる
+SPC_DREG		equ	$15
+
+;Temporary Register
+SPC_TEMP		equ	$17
+
+;Transfer Counter High
+SPC_TCH			equ	$19
+
+;Transfer Counter Mid
+SPC_TCM			equ	$1B
+
+;Transfer Counter Low
+SPC_TCL			equ	$1D
+
+;フェーズ
+SPC_PHASE_MASK		equ	%00000111
+SPC_DATAOUT_PHASE	equ	%00000000	;  0=Data Out Phase。データアウトフェーズ
+SPC_DATAIN_PHASE	equ	%00000001	;  1=Data In Phase。データインフェーズ
+SPC_CMDOUT_PHASE	equ	%00000010	;  2=Command Phase。コマンドアウトフェーズ
+SPC_STSIN_PHASE		equ	%00000011	;  3=Status Phase。ステータスインフェーズ
+SPC_MSGOUT_PHASE	equ	%00000110	;  6=Message Out Phase。メッセージアウトフェーズ
+SPC_MSGIN_PHASE		equ	%00000111	;  7=Message In Phase。メッセージインフェーズ
+
+;ROM起動ハンドル
+SCSI_HANDLE_IN		equ	$00FC0000	;.l[8] 内蔵SCSI ROM起動ハンドル
+SCSI_HANDLE_EX		equ	$00EA0020	;.l[8] 拡張SCSI ROM起動ハンドル
+
+  .endif  ;__spc_equ__
+	.list

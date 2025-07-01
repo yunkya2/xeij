@@ -1,0 +1,21 @@
+#========================================================================================
+#  Makefile.host
+#  Copyright (C) 2003-2019 Makoto Kamada
+#
+#  This file is part of the XEiJ (X68000 Emulator in Java).
+#  You can use, modify and redistribute the XEiJ if the conditions are met.
+#  Read the XEiJ License for more details.
+#  https://stdkmd.net/xeij/
+#========================================================================================
+
+
+#  PARI/GP
+#    https://pari.math.u-bordeaux.fr/
+GP = gp
+
+
+all: fputest.s
+
+
+fputest.s: efp.gp
+	echo 'read("efp.gp");make_test()' | $(GP) -q -s 80000000

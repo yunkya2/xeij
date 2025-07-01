@@ -1,0 +1,8946 @@
+	.nlist
+  .ifndef __control2_mac__
+__control2_mac__	equ	1
+
+;control.macは引数の順序がlabel,cc,op
+;control2.macは引数の順序がop,cc,label
+  .ifdef __control_mac__
+	.fail	1	;control.macとcontrol2.macは共存できない
+  .endif
+
+;----------------------------------------------------------------
+;
+;	制御文
+;
+;----------------------------------------------------------------
+;	分岐しない
+;	bf	label
+;	bnt	label
+;	jbf	label
+;	jbnt	label
+;----------------------------------------------------------------
+;	分岐する
+;	bnf	label				bra	label
+;	bt	label				bra	label
+;	jbnf	label				jbra	label
+;	jbt	label				jbra	label
+;----------------------------------------------------------------
+;	二重否定
+;	bnncc	label				bcc	label
+;	dbnncc	dn,label			dbcc	dn,label
+;	jbnncc	label				jbcc	label
+;	snncc	ea				scc	ea
+;----------------------------------------------------------------
+;	無条件分岐
+;	jmp	ea				jmp	ea
+;	rtd	imm				rtd	imm
+;	rte					rte
+;	rtr					rtr
+;	rts					rts
+;	(noreturnを含む)
+;----------------------------------------------------------------
+;	無条件ブレーク
+;	break					jbra	~~breakN
+;	(noreturnを含む)
+;	(右に注釈を書くときはbreak t)
+;----------------------------------------------------------------
+;	条件付きブレーク
+;	break	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~breakN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付きブレーク
+;	breakand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~breakN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付きブレーク
+;	breakor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~breakN
+;						op2
+;						jbcc2	~~breakN
+;						op3
+;						jbcc3	~~breakN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件2段ブレーク
+;	break2					jbra	~~breakN
+;	(noreturnを含む)
+;	(右に注釈を書くときはbreak2 t)
+;----------------------------------------------------------------
+;	条件付き2段ブレーク
+;	break2	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~breakN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付き2段ブレーク
+;	break2and	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~breakN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付き2段ブレーク
+;	break2or	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~breakN
+;						op2
+;						jbcc2	~~breakN
+;						op3
+;						jbcc3	~~breakN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件コンティニュー
+;	continue				jbra	~~continueN
+;	(noreturnを含む)
+;	(右に注釈を書くときはcontinue t)
+;----------------------------------------------------------------
+;	条件付きコンティニュー
+;	continue	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~continueN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付きコンティニュー
+;	continueand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~continueN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付きコンティニュー
+;	continueor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~continueN
+;						op2
+;						jbcc2	~~continueN
+;						op3
+;						jbcc3	~~continueN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件2段コンティニュー
+;	continue2				jbra	~~continueN
+;	(noreturnを含む)
+;	(右に注釈を書くときはcontinue t)
+;----------------------------------------------------------------
+;	条件付き2段コンティニュー
+;	continue2	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~continueN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付き2段コンティニュー
+;	continue2and	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~continueN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付き2段コンティニュー
+;	continue2or	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~continueN
+;						op2
+;						jbcc2	~~continueN
+;						op3
+;						jbcc3	~~continueN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	後判定ループ
+;	do				~~redoN:
+;		:					:
+;	while	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						jbcc	~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(1回ループはdo～while f)
+;	(無限ループはdo～while t)
+;----------------------------------------------------------------
+;	AND後判定ループ
+;	do				~~redoN:
+;		:					:
+;	whileand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~redoN
+;					@else:
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR後判定ループ
+;	do				~~redoN:
+;		:					:
+;	whileor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbcc1	~~redoN
+;						op2
+;						jbcc2	~~redoN
+;						op3
+;						jbcc3	~~redoN
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	コンティニュー飛び込み後判定ループ
+;	docontinue				jbra	~~continueN
+;					~~redoN:
+;		:					:
+;	while	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						jbcc	~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	コンティニュー飛び込みAND後判定ループ
+;	docontinue				jbra	~~continueN
+;					~~redoN:
+;		:					:
+;	whileand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~redoN
+;					@else:
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	コンティニュー飛び込みOR後判定ループ
+;	docontinue				jbra	~~continueN
+;					~~redoN:
+;		:					:
+;	whileor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbcc1	~~redoN
+;						op2
+;						jbcc2	~~redoN
+;						op3
+;						jbcc3	~~redoN
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	飛び込み後判定ループ
+;	dostart					jbra	~~startN
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	while	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						jbcc	~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	飛び込みAND後判定ループ
+;	dostart					jbra	~~startN
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	whileand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~redoN
+;					@else:
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	飛び込みOR後判定ループ
+;	dostart					jbra	~~startN
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	whileor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbcc1	~~redoN
+;						op2
+;						jbcc2	~~redoN
+;						op3
+;						jbcc3	~~redoN
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	回数付きループ
+;	for	dn			~~redoN:
+;		:					:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;					~~breakN:
+;	(dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	回数付き後判定ループ
+;	for	dn			~~redoN:
+;		:					:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	コンティニュー飛び込み回数付きループ
+;	forcontinue	dn			jbra	~~continueN
+;					~~redoN:
+;		:					:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;					~~breakN:
+;----------------------------------------------------------------
+;	コンティニュー飛び込み回数付き後判定ループ
+;	forcontinue	dn			jbra	~~continueN
+;					~~redoN:
+;		:					:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	コンティニュー飛び込みロング回数付きループ
+;	forcontinuelong	dn			jbra	~~continueN
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;----------------------------------------------------------------
+;	コンティニュー飛び込みロング回数付き後判定ループ
+;	forcontinuelong	dn			jbra	~~continueN
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;						bncc	~~breakN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	ロング回数付きループ
+;	forlong	dn				swap	dn
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;	(dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	ロング回数付き後判定ループ
+;	forlong	dn				swap	dn
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;						bncc	~~breakN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	飛び込み回数付きループ
+;	forstart	dn			jbra	~~startN
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;					~~breakN:
+;	(dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	飛び込み回数付き後判定ループ
+;	forstart	dn			jbra	~~startN
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	飛び込みロング回数付きループ
+;	forstartlong	dn			jbra	~~startN
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	next				~~continueN:
+;						dbra	dn,~~redoN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;	(dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	飛び込みロング回数付き後判定ループ
+;	forstartlong	dn			jbra	~~startN
+;					~~longredoN:
+;						swap	dn
+;					~~redoN:
+;		:					:
+;	start				~~startN:
+;		:
+;	next	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						dbncc	dn,~~redoN
+;						bncc	~~breakN
+;						swap	dn
+;						dbra	dn,~~longredoN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;	(最大dn+1回。0回は不可)
+;----------------------------------------------------------------
+;	無条件分岐
+;	goto	label				jbra	label
+;	(noreturnを含む)
+;----------------------------------------------------------------
+;	条件分岐
+;	goto	<op1>,<op2>,<op3>,cc,label
+;						op1
+;						op2
+;						op3
+;						jbcc	label
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件分岐
+;	gotoand	<op1>,cc1,<op2>,cc2,<op3>,cc3,label
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	label
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件分岐
+;	gotoor	<op1>,cc1,<op2>,cc2,<op3>,cc3,label
+;						op1
+;						jbcc1	label
+;						op2
+;						jbcc2	label
+;						op3
+;						jbcc3	label
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	条件分岐
+;	if	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbncc	~~else2N
+;		:					:
+;	elif	<op1>,<op2>,<op3>,cc
+;						jbra	~~endifN
+;					~~else2N:
+;						op1
+;						op2
+;						op3
+;						jbncc	~~else3N
+;		:					:
+;	elif	<op1>,<op2>,<op3>,cc
+;					~~else3N:
+;						op1
+;						op2
+;						op3
+;						jbncc	~~else4N
+;		:					:
+;	else					jbra	~~endifN
+;					~~else4N:
+;		:					:
+;	endif				~~elseMN:
+;					~~endifN:
+;	(命令は0～10個、条件は1個)
+;	(then節にnoreturnまたはnoreturnを含むマクロを書くとendifにジャンプするコードが省略される)
+;----------------------------------------------------------------
+;	AND条件分岐
+;	ifand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	~~else2N
+;						op2
+;						jbncc2	~~else2N
+;						op3
+;						jbncc3	~~else2N
+;		:					:
+;	elifand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						jbra	~~endifN
+;					~~else2N:
+;						op1
+;						jbncc1	~~else3N
+;						op2
+;						jbncc2	~~else3N
+;						op3
+;						jbncc3	~~else3N
+;		:					:
+;	endif				~~elseMN:
+;					~~endifN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件分岐
+;	ifor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	@then
+;						op2
+;						jbcc2	@then
+;						op3
+;						jbncc3	~~else2N
+;					@then:
+;		:					:
+;	elifor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						jbra	~~endifN
+;					~~else2N:
+;						op1
+;						jbcc1	@then
+;						op2
+;						jbcc2	@then
+;						op3
+;						jbncc3	~~else3N
+;					@then:
+;		:					:
+;	endif				~~elseMN:
+;					~~endifN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件リドゥ
+;	redo					jbra	~~redoN
+;	(noreturnを含む)
+;	(右に注釈を書くときはredo t)
+;----------------------------------------------------------------
+;	条件付きリドゥ
+;	redo	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~redoN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付きリドゥ
+;	redoand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~redoN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付きリドゥ
+;	redoor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~redoN
+;						op2
+;						jbcc2	~~redoN
+;						op3
+;						jbcc3	~~redoN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件2段リドゥ
+;	redo2					jbra	~~redoN
+;	(noreturnを含む)
+;	(右に注釈を書くときはredo t)
+;----------------------------------------------------------------
+;	条件付き2段リドゥ
+;	redo2	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~redoN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付き2段リドゥ
+;	redo2and	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~redoN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付き2段リドゥ
+;	redo2or	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~redoN
+;						op2
+;						jbcc2	~~redoN
+;						op3
+;						jbcc3	~~redoN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件リスタート
+;	restart					jbra	~~startN
+;	(noreturnを含む)
+;	(右に注釈を書くときはrestart t)
+;----------------------------------------------------------------
+;	条件付きリスタート
+;	restart	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~startN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付きリスタート
+;	restartand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~startN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付きリスタート
+;	restartor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~startN
+;						op2
+;						jbcc2	~~startN
+;						op3
+;						jbcc3	~~startN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	無条件2段リスタート
+;	restart2				jbra	~~startN
+;	(noreturnを含む)
+;	(右に注釈を書くときはrestart t)
+;----------------------------------------------------------------
+;	条件付き2段リスタート
+;	restart2	<op1>,<op2>,<op3>,cc
+;						op1
+;						op2
+;						op3
+;						jbcc	~~startN
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND条件付き2段リスタート
+;	restart2and	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbncc1	@else
+;						op2
+;						jbncc2	@else
+;						op3
+;						jbcc3	~~startN
+;					@else:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR条件付き2段リスタート
+;	restart2or	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;						op1
+;						jbcc1	~~startN
+;						op2
+;						jbcc2	~~startN
+;						op3
+;						jbcc3	~~startN
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	前判定ループ
+;	while	<op1>,<op2>,<op3>,cc
+;					~~continueN:
+;						op1
+;						op2
+;						op3
+;						jbncc	~~breakN
+;					~~redoN:
+;		:					:
+;	endwhile				jbra	~~continueN
+;					~~breakN:
+;	(命令は0～10個、条件は1個)
+;----------------------------------------------------------------
+;	AND前判定ループ
+;	whileand	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbncc1	~~breakN
+;						op2
+;						jbncc2	~~breakN
+;						op3
+;						jbncc3	~~breakN
+;					~~redoN:
+;		:					:
+;	endwhile				jbra	~~continueN
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+;	OR前判定ループ
+;	whileor	<op1>,cc1,<op2>,cc2,<op3>,cc3
+;					~~continueN:
+;						op1
+;						jbcc1	@then
+;						op2
+;						jbcc2	@then
+;						op3
+;						jbncc3	~~breakN
+;					@then:
+;					~~redoN:
+;		:					:
+;	endwhile				jbra	~~continueN
+;					~~breakN:
+;	(命令と条件は2～10組)
+;----------------------------------------------------------------
+
+~~DO		equ	1		;do～while
+~~DOSTART	equ	2		;dostart～while
+~~ELSE		equ	3		;else～endif。枝番は節
+~~FOR		equ	4		;for～next
+~~FORLONG	equ	5		;forlong～next
+~~FORSTART	equ	6		;forstart～next
+~~FORSTARTLONG	equ	7		;forstartlong～next
+~~IF		equ	8		;if～elif～else。枝番は節
+~~WHILE		equ	9		;while～endwhile
+
+~~BRANCH	equ	100000		;枝番の係数
+
+~~usedBlocks = 0			;使ったブロックの数。0=なし
+
+~~blockDepth = 0			;ブロックの深さ。0=なし
+~~blockNumber = 0			;枝番*~~BRANCH+最も内側のブロックの番号
+~~blockType = 0				;最も内側のブロックの種類
+~~blockNoReturn = 0			;最も内側のブロックのnoreturnの有無
+;~~blockNumber%~~blockDepth		;~~blockNumberのスタック
+;~~blockType%~~blockDepth		;~~blockTypeのスタック
+;~~blockNoReturn%~~blockDepth		;~~blockNoReturnのスタック
+
+~~loopDepth = 0				;ループの深さ。0=なし
+~~loopNumber = 0			;最も内側のループのブロックの番号
+~~loopType = 0				;最も内側のループのブロックの種類
+;~~loopNumber%~~loopDepth		;~~loopNumberのスタック
+;~~loopType%~~loopDepth			;~~loopTypeのスタック
+
+~~forDepth = 0				;for～nextの深さ。0=なし
+~~forDn reg d0				;最も内側のfor～nextのdn
+;~~forDn%~~forDepth			;~~forDnのスタック
+
+;----------------------------------------------------------------
+bf	.macro	label
+	.endm
+bnt	.macro	label
+	.endm
+jbf	.macro	label
+	.endm
+jbnt	.macro	label
+	.endm
+
+;----------------------------------------------------------------
+bnf	.macro	label
+	.sizem	sz,cn
+	bra&sz	label
+	.endm
+bt	.macro	label
+	.sizem	sz,cn
+	bra&sz	label
+	.endm
+jbnf	.macro	label
+	.sizem	sz,cn
+	jbra&sz	label
+	.endm
+jbt	.macro	label
+	.sizem	sz,cn
+	jbra&sz	label
+	.endm
+
+;----------------------------------------------------------------
+  .irp %cc,f,t,hi,ls,cc,hs,cs,lo,ne,nz,eq,ze,vc,vs,pl,mi,ge,lt,gt,le
+bnn%cc	.macro	label
+	.sizem	sz,cn
+	b%cc&sz	label
+	.endm
+dbnn%cc	.macro	dn,label
+	.sizem	sz,cn
+	db%cc&sz	dn,label
+	.endm
+jbnn%cc	.macro	label
+	.sizem	sz,cn
+	jb%cc&sz	label
+	.endm
+snn%cc	.macro	ea
+	.sizem	sz,cn
+	s%cc&sz	ea
+	.endm
+  .endm
+
+;----------------------------------------------------------------
+jmp	.macro	ea
+	.sall
+~~blockNoReturn = 1
+	.lall
+	.jmp	ea
+	.endm
+
+rtd	.macro	imm
+	.sall
+~~blockNoReturn = 1
+	.lall
+	.rtd	imm
+	.endm
+
+rte	.macro
+	.sall
+~~blockNoReturn = 1
+	.lall
+	.rte
+	.endm
+
+rtr	.macro
+	.sall
+~~blockNoReturn = 1
+	.lall
+	.rtr
+	.endm
+
+rts	.macro
+	.sall
+~~blockNoReturn = 1
+	.lall
+	.rts
+	.endm
+
+;----------------------------------------------------------------
+break	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;breakに対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+	.lall
+	jbra	~~break%~~loopNumber
+	.sall
+  .elif cn=1
+	.lall
+	jb&op1	~~break%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jb&op2	~~break%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jb&op3	~~break%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	~~break%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	~~break%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	~~break%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	~~break%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	~~break%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	~~break%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	~~break%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	~~break%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;breakの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+breakand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;breakandに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;breakandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	~~break%~~loopNumber
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	~~break%~~loopNumber
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;breakandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+breakor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;breakorに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;breakorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	op6
+	jb&cc6	~~break%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	op6
+	jb&cc6	~~break%~~loopNumber
+	op7
+	jb&cc7	~~break%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	op6
+	jb&cc6	~~break%~~loopNumber
+	op7
+	jb&cc7	~~break%~~loopNumber
+	op8
+	jb&cc8	~~break%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	op6
+	jb&cc6	~~break%~~loopNumber
+	op7
+	jb&cc7	~~break%~~loopNumber
+	op8
+	jb&cc8	~~break%~~loopNumber
+	op9
+	jb&cc9	~~break%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~break%~~loopNumber
+	op2
+	jb&cc2	~~break%~~loopNumber
+	op3
+	jb&cc3	~~break%~~loopNumber
+	op4
+	jb&cc4	~~break%~~loopNumber
+	op5
+	jb&cc5	~~break%~~loopNumber
+	op6
+	jb&cc6	~~break%~~loopNumber
+	op7
+	jb&cc7	~~break%~~loopNumber
+	op8
+	jb&cc8	~~break%~~loopNumber
+	op9
+	jb&cc9	~~break%~~loopNumber
+	op10
+	jb&cc10	~~break%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;breakorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+break2	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;break2に対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jbra	~~break%~i
+	.sall
+  .elif cn=1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op1	~~break%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op2	~~break%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op3	~~break%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op4	~~break%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op5	~~break%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op6	~~break%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op7	~~break%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op8	~~break%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op9	~~break%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op10	~~break%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op11	~~break%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;break2の引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+break2and	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;break2andに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;break2andの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~break%~i
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~break%~i
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~break%~i
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~break%~i
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;break2andの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+break2or	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;break2orに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;break2orの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~break%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~break%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~break%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~break%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~break%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~break%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~break%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~break%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~break%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~break%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~break%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~break%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~break%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~break%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~break%~i
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~break%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;break2orの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continue	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;continueに対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+	.lall
+	jbra	~~continue%~~loopNumber
+	.sall
+  .elif cn=1
+	.lall
+	jb&op1	~~continue%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jb&op2	~~continue%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jb&op3	~~continue%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	~~continue%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	~~continue%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	~~continue%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	~~continue%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	~~continue%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	~~continue%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	~~continue%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	~~continue%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;continueの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continueand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;continueandに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;continueandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	~~continue%~~loopNumber
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	~~continue%~~loopNumber
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;continueandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continueor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;continueorに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;continueorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	op6
+	jb&cc6	~~continue%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	op6
+	jb&cc6	~~continue%~~loopNumber
+	op7
+	jb&cc7	~~continue%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	op6
+	jb&cc6	~~continue%~~loopNumber
+	op7
+	jb&cc7	~~continue%~~loopNumber
+	op8
+	jb&cc8	~~continue%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	op6
+	jb&cc6	~~continue%~~loopNumber
+	op7
+	jb&cc7	~~continue%~~loopNumber
+	op8
+	jb&cc8	~~continue%~~loopNumber
+	op9
+	jb&cc9	~~continue%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~continue%~~loopNumber
+	op2
+	jb&cc2	~~continue%~~loopNumber
+	op3
+	jb&cc3	~~continue%~~loopNumber
+	op4
+	jb&cc4	~~continue%~~loopNumber
+	op5
+	jb&cc5	~~continue%~~loopNumber
+	op6
+	jb&cc6	~~continue%~~loopNumber
+	op7
+	jb&cc7	~~continue%~~loopNumber
+	op8
+	jb&cc8	~~continue%~~loopNumber
+	op9
+	jb&cc9	~~continue%~~loopNumber
+	op10
+	jb&cc10	~~continue%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;continueorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continue2	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;continue2に対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jbra	~~continue%~i
+	.sall
+  .elif cn=1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op1	~~continue%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op2	~~continue%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op3	~~continue%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op4	~~continue%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op5	~~continue%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op6	~~continue%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op7	~~continue%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op8	~~continue%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op9	~~continue%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op10	~~continue%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op11	~~continue%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;continue2の引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continue2and	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;continue2andに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;continue2andの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~continue%~i
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~continue%~i
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~continue%~i
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~continue%~i
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;continue2andの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+continue2or	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;continue2orに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;continue2orの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~continue%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~continue%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~continue%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~continue%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~continue%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~continue%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~continue%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~continue%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~continue%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~continue%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~continue%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~continue%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~continue%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~continue%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~continue%~i
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~continue%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;continue2orの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+do	.macro
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~DO
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~DO
+	.lall
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+docontinue	.macro
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~DO
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~DO
+	.lall
+	jbra	~~continue%~~loopNumber
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+dostart	.macro
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~DOSTART
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~DOSTART
+	.lall
+	jbra	~~start%~~loopNumber
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+elif	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~blockType<>~~IF
+	.lall
+	.fail	1	;elifに対応するif*,elif*がない
+	.exitm
+  .endif
+~~blockNumber = ~~blockNumber+~~BRANCH
+;~~blockType = ~~IF
+  .if ~~blockNoReturn=0
+~j = ~~blockNumber.mod.~~BRANCH
+	.lall
+	jbra	~~endif%~j
+	.sall
+  .endif
+~~blockNoReturn = 0
+	.lall
+~~else%~~blockNumber:
+  .if cn=0
+	.lall
+	.fail	1	;elifの引数が足りない
+	.exitm
+  .elif cn=1
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op1	~~else%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op2	~~else%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op3	~~else%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op4	~~else%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op5	~~else%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op6	~~else%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op7	~~else%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op8	~~else%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op9	~~else%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op10	~~else%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op11	~~else%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;elifの引数が多すぎる
+	.exitm
+  .endif
+	.endm
+
+;----------------------------------------------------------------
+elifand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~blockType<>~~IF
+	.lall
+	.fail	1	;elifandに対応するif*,elif*がない
+	.exitm
+  .endif
+~~blockNumber = ~~blockNumber+~~BRANCH
+;~~blockType = ~~IF
+  .if ~~blockNoReturn=0
+~j = ~~blockNumber.mod.~~BRANCH
+	.lall
+	jbra	~~endif%~j
+	.sall
+  .endif
+~~blockNoReturn = 0
+	.lall
+~~else%~~blockNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;elifandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc10	~~else%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;elifandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+elifor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~blockType<>~~IF
+	.lall
+	.fail	1	;eliforに対応するif*,elif*がない
+	.exitm
+  .endif
+~~blockNumber = ~~blockNumber+~~BRANCH
+;~~blockType = ~~IF
+  .if ~~blockNoReturn=0
+~j = ~~blockNumber.mod.~~BRANCH
+	.lall
+	jbra	~~endif%~j
+	.sall
+  .endif
+~~blockNoReturn = 0
+	.lall
+~~else%~~blockNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;eliforの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+@then:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+@then:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+@then:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+@then:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+@then:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+@then:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+@then:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	jb&cc8	@then
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+@then:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	jb&cc8	@then
+	op9
+	jb&cc9	@then
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc10	~~else%~i
+@then:
+	.sall
+  .else
+	.lall
+	.fail	1	;eliforの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+else	.macro
+	.sall
+  .if ~~blockType<>~~IF
+	.lall
+	.fail	1	;elseに対応するif*,elif*がない
+	.exitm
+  .endif
+~~blockNumber = ~~blockNumber+~~BRANCH
+~~blockType = ~~ELSE
+  .if ~~blockNoReturn=0
+~j = ~~blockNumber.mod.~~BRANCH
+	.lall
+	jbra	~~endif%~j
+	.sall
+  .endif
+~~blockNoReturn = 0
+	.lall
+~~else%~~blockNumber:
+	.endm
+
+;----------------------------------------------------------------
+endif	.macro
+	.sall
+  .if (~~blockType<>~~IF).and.(~~blockType<>~~ELSE)
+	.lall
+	.fail	1	;endifに対応するif*,elif*,elseがない
+	.exitm
+  .endif
+~~blockNumber = ~~blockNumber+~~BRANCH
+~j = ~~blockNumber.mod.~~BRANCH
+	.lall
+~~else%~~blockNumber:
+~~endif%~j:
+	.sall
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+endwhile	.macro
+	.sall
+  .if ~~blockType<>~~WHILE
+	.lall
+	.fail	1	;endwhileに対応するwhileがない
+	.exitm
+  .endif
+	.lall
+	jbra	~~continue%~~loopNumber
+~~break%~~loopNumber:
+	.sall
+~~loopDepth = ~~loopDepth-1
+~~loopNumber = ~~loopNumber%~~loopDepth
+~~loopType = ~~loopType%~~loopDepth
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+for	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FOR
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FOR
+~~forDn reg dn
+	.lall
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+forcontinue	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forcontinueの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forcontinueの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FOR
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FOR
+~~forDn reg dn
+	.lall
+	jbra	~~continue%~~loopNumber
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+forcontinuelong	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forcontinuelongの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forcontinuelongの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FORLONG
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FORLONG
+~~forDn reg dn
+	.lall
+	jbra	~~continue%~~loopNumber
+~~longredo%~~loopNumber:
+	swap	~~forDn
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+forlong	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forlongの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forlongの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FORLONG
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FORLONG
+~~forDn reg dn
+	.lall
+	swap	~~forDn
+~~longredo%~~loopNumber:
+	swap	~~forDn
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+forstart	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forstartの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forstartの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FORSTART
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FORSTART
+~~forDn reg dn
+	.lall
+	jbra	~~start%~~loopNumber
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+forstartlong	.macro	dn
+	.sizem	sz,cn
+	.sall
+  .if cn<1
+	.lall
+	.fail	1	;forstartlongの引数が足りない
+	.exitm
+  .elif 1<cn
+	.lall
+	.fail	1	;forstartlongの引数が多すぎる
+	.exitm
+  .endif
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~forDn%~~forDepth reg ~~forDn
+~~forDepth = ~~forDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~FORSTARTLONG
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~FORSTARTLONG
+~~forDn reg dn
+	.lall
+	jbra	~~start%~~loopNumber
+~~longredo%~~loopNumber:
+	swap	~~forDn
+~~redo%~~loopNumber:
+	.endm
+
+;----------------------------------------------------------------
+goto	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11,op12	;最後はcc,label
+	.sizem	sz,cn
+	.sall
+  .if cn=0
+	.lall
+	.fail	1	;gotoの引数が足りない
+	.exitm
+  .elif cn=1
+~~blockNoReturn = 1
+	.lall
+	jbra	op1
+	.sall
+  .elif cn=2
+	.lall
+	jb&op1	op2
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	jb&op2	op3
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	jb&op3	op4
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	op5
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	op6
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	op7
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	op8
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	op9
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	op10
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	op11
+	.sall
+  .elif cn=12
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	op12
+	.sall
+  .else
+	.lall
+	.fail	1	;gotoの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+gotoand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10,op11	;最後はlabel
+	.sizem	sz,cn
+	.sall
+  .if cn<=3
+	.lall
+	.fail	1	;gotoandの引数が足りない
+	.exitm
+  .elif cn<=5
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	op3
+@else:
+	.sall
+  .elif cn<=7
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	op4
+@else:
+	.sall
+  .elif cn<=9
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	op5
+@else:
+	.sall
+  .elif cn<=11
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	op6
+@else:
+	.sall
+  .elif cn<=13
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	op7
+@else:
+	.sall
+  .elif cn<=15
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	op8
+@else:
+	.sall
+  .elif cn<=17
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	op9
+@else:
+	.sall
+  .elif cn<=19
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	op10
+@else:
+	.sall
+  .elif cn<=21
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	op11
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;gotoandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+gotoor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10,op11	;最後はlabel
+	.sizem	sz,cn
+	.sall
+  .if cn<=3
+	.lall
+	.fail	1	;gotoorの引数が足りない
+	.exitm
+  .elif cn<=5
+	.lall
+	op1
+	jb&cc1	op3
+	op2
+	jb&cc2	op3
+	.sall
+  .elif cn<=7
+	.lall
+	op1
+	jb&cc1	op4
+	op2
+	jb&cc2	op4
+	op3
+	jb&cc3	op4
+	.sall
+  .elif cn<=9
+	.lall
+	op1
+	jb&cc1	op5
+	op2
+	jb&cc2	op5
+	op3
+	jb&cc3	op5
+	op4
+	jb&cc4	op5
+	.sall
+  .elif cn<=11
+	.lall
+	op1
+	jb&cc1	op6
+	op2
+	jb&cc2	op6
+	op3
+	jb&cc3	op6
+	op4
+	jb&cc4	op6
+	op5
+	jb&cc5	op6
+	.sall
+  .elif cn<=13
+	.lall
+	op1
+	jb&cc1	op7
+	op2
+	jb&cc2	op7
+	op3
+	jb&cc3	op7
+	op4
+	jb&cc4	op7
+	op5
+	jb&cc5	op7
+	op6
+	jb&cc6	op7
+	.sall
+  .elif cn<=15
+	.lall
+	op1
+	jb&cc1	op8
+	op2
+	jb&cc2	op8
+	op3
+	jb&cc3	op8
+	op4
+	jb&cc4	op8
+	op5
+	jb&cc5	op8
+	op6
+	jb&cc6	op8
+	op7
+	jb&cc7	op8
+	.sall
+  .elif cn<=17
+	.lall
+	op1
+	jb&cc1	op9
+	op2
+	jb&cc2	op9
+	op3
+	jb&cc3	op9
+	op4
+	jb&cc4	op9
+	op5
+	jb&cc5	op9
+	op6
+	jb&cc6	op9
+	op7
+	jb&cc7	op9
+	op8
+	jb&cc8	op9
+	.sall
+  .elif cn<=19
+	.lall
+	op1
+	jb&cc1	op10
+	op2
+	jb&cc2	op10
+	op3
+	jb&cc3	op10
+	op4
+	jb&cc4	op10
+	op5
+	jb&cc5	op10
+	op6
+	jb&cc6	op10
+	op7
+	jb&cc7	op10
+	op8
+	jb&cc8	op10
+	op9
+	jb&cc9	op10
+	.sall
+  .elif cn<=21
+	.lall
+	op1
+	jb&cc1	op11
+	op2
+	jb&cc2	op11
+	op3
+	jb&cc3	op11
+	op4
+	jb&cc4	op11
+	op5
+	jb&cc5	op11
+	op6
+	jb&cc6	op11
+	op7
+	jb&cc7	op11
+	op8
+	jb&cc8	op11
+	op9
+	jb&cc9	op11
+	op10
+	jb&cc10	op11
+	.sall
+  .else
+	.lall
+	.fail	1	;gotoorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+if	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks+~~BRANCH
+~~blockType = ~~IF
+~~blockNoReturn = 0
+  .if cn=0
+	.lall
+	.fail	1	;ifの引数が足りない
+	.exitm
+  .elif cn=1
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op1	~~else%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op2	~~else%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op3	~~else%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op4	~~else%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op5	~~else%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op6	~~else%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op7	~~else%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op8	~~else%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op9	~~else%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op10	~~else%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&op11	~~else%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;ifの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+@then:
+	.endm
+
+;----------------------------------------------------------------
+ifand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks+~~BRANCH
+~~blockType = ~~IF
+~~blockNoReturn = 0
+  .if cn<=2
+	.lall
+	.fail	1	;ifandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc1	~~else%~i
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc10	~~else%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;ifandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+@then:
+	.endm
+
+;----------------------------------------------------------------
+ifor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks+~~BRANCH
+~~blockType = ~~IF
+~~blockNoReturn = 0
+  .if cn<=2
+	.lall
+	.fail	1	;iforの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc2	~~else%~i
+@then:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc3	~~else%~i
+@then:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc4	~~else%~i
+@then:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc5	~~else%~i
+@then:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc6	~~else%~i
+@then:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc7	~~else%~i
+@then:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc8	~~else%~i
+@then:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	jb&cc8	@then
+	op9
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc9	~~else%~i
+@then:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	@then
+	op2
+	jb&cc2	@then
+	op3
+	jb&cc3	@then
+	op4
+	jb&cc4	@then
+	op5
+	jb&cc5	@then
+	op6
+	jb&cc6	@then
+	op7
+	jb&cc7	@then
+	op8
+	jb&cc8	@then
+	op9
+	jb&cc9	@then
+	op10
+	.sall
+~i = ~~blockNumber+~~BRANCH
+	.lall
+	jbn&cc10	~~else%~i
+@then:
+	.sall
+  .else
+	.lall
+	.fail	1	;iforの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+next	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if (~~blockType<>~~FOR).and.(~~blockType<>~~FORSTART).and.(~~blockType<>~~FORLONG).and.(~~blockType<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;nextに対応するfor*がない
+	.exitm
+  .endif
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if 2<=cn
+	.lall
+	op1
+	.sall
+  .if 3<=cn
+	.lall
+	op2
+	.sall
+  .if 4<=cn
+	.lall
+	op3
+	.sall
+  .if 5<=cn
+	.lall
+	op4
+	.sall
+  .if 6<=cn
+	.lall
+	op5
+	.sall
+  .if 7<=cn
+	.lall
+	op6
+	.sall
+  .if 8<=cn
+	.lall
+	op7
+	.sall
+  .if 9<=cn
+	.lall
+	op8
+	.sall
+  .if 10<=cn
+	.lall
+	op9
+	.sall
+  .if 11<=cn
+	.lall
+	op10
+	.sall
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .endif
+  .if cn=0
+	.lall
+	dbra	~~forDn,~~redo%~~loopNumber
+	.sall
+  .elif cn=1
+	.lall
+	dbn&op1	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op1	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=2
+	.lall
+	dbn&op2	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op2	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=3
+	.lall
+	dbn&op3	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op3	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=4
+	.lall
+	dbn&op4	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op4	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=5
+	.lall
+	dbn&op5	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op5	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=6
+	.lall
+	dbn&op6	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op6	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=7
+	.lall
+	dbn&op7	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op7	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=8
+	.lall
+	dbn&op8	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op8	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=9
+	.lall
+	dbn&op9	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op9	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=10
+	.lall
+	dbn&op10	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op10	~~break%~~loopNumber
+	.sall
+  .endif
+  .elif cn=11
+	.lall
+	dbn&op11	~~forDn,~~redo%~~loopNumber
+	.sall
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	bn&op11	~~break%~~loopNumber
+	.sall
+  .endif
+  .else
+	.lall
+	.fail	1	;nextの引数が多すぎる
+	.exitm
+  .endif
+  .if (~~blockType=~~FORLONG).or.(~~blockType=~~FORSTARTLONG)
+	.lall
+	swap	~~forDn
+	dbra	~~forDn,~~longredo%~~loopNumber
+	.sall
+  .endif
+	.lall
+~~break%~~loopNumber:
+	.sall
+~~forDepth = ~~forDepth-1
+~~forDn reg ~~forDn%~~forDepth
+~~loopDepth = ~~loopDepth-1
+~~loopNumber = ~~loopNumber%~~loopDepth
+~~loopType = ~~loopType%~~loopDepth
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+noreturn	.macro
+	.sall
+  .if (~~blockType<>~~IF).and.(~~blockType<>~~ELSE)
+	.lall
+	.fail	1	;noreturnに対応するif*,elif*,elseがない
+	.exitm
+  .endif
+~~blockNoReturn = 1
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redo	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;redoに対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+	.lall
+	jbra	~~redo%~~loopNumber
+	.sall
+  .elif cn=1
+	.lall
+	jb&op1	~~redo%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jb&op2	~~redo%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jb&op3	~~redo%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	~~redo%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	~~redo%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	~~redo%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	~~redo%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	~~redo%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	~~redo%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	~~redo%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	~~redo%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;redoの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redoand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;redoandに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;redoandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	~~redo%~~loopNumber
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;redoandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redoor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;redoorに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;redoorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jb&cc9	~~redo%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jb&cc9	~~redo%~~loopNumber
+	op10
+	jb&cc10	~~redo%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;redoorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redo2	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;redo2に対応するループがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jbra	~~redo%~i
+	.sall
+  .elif cn=1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op1	~~redo%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op2	~~redo%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op3	~~redo%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op4	~~redo%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op5	~~redo%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op6	~~redo%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op7	~~redo%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op8	~~redo%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op9	~~redo%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op10	~~redo%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op11	~~redo%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;redo2の引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redo2and	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;redo2andに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;redo2andの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~redo%~i
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~redo%~i
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~redo%~i
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~redo%~i
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;redo2andの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+redo2or	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;redo2orに対応するループがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;redo2orの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~redo%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~redo%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~redo%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~redo%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~redo%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~redo%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~redo%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~redo%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~redo%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~redo%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~redo%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~redo%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~redo%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~redo%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~redo%~i
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~redo%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;redo2orの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restart	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;restartに対応するループがない
+	.exitm
+  .endif
+~i = ~~loopNumber
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restartに対応する*startがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+	.lall
+	jbra	~~start%~~loopNumber
+	.sall
+  .elif cn=1
+	.lall
+	jb&op1	~~start%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jb&op2	~~start%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jb&op3	~~start%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	~~start%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	~~start%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	~~start%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	~~start%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	~~start%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	~~start%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	~~start%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	~~start%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;restartの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restartand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;restartandに対応するループがない
+	.exitm
+  .endif
+~i = ~~loopNumber
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restartandに対応する*startがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;restartandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	~~start%~~loopNumber
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	~~start%~~loopNumber
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;restartandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restartor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;restartorに対応するループがない
+	.exitm
+  .endif
+~i = ~~loopNumber
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restartorに対応する*startがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;restartorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	op6
+	jb&cc6	~~start%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	op6
+	jb&cc6	~~start%~~loopNumber
+	op7
+	jb&cc7	~~start%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	op6
+	jb&cc6	~~start%~~loopNumber
+	op7
+	jb&cc7	~~start%~~loopNumber
+	op8
+	jb&cc8	~~start%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	op6
+	jb&cc6	~~start%~~loopNumber
+	op7
+	jb&cc7	~~start%~~loopNumber
+	op8
+	jb&cc8	~~start%~~loopNumber
+	op9
+	jb&cc9	~~start%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~start%~~loopNumber
+	op2
+	jb&cc2	~~start%~~loopNumber
+	op3
+	jb&cc3	~~start%~~loopNumber
+	op4
+	jb&cc4	~~start%~~loopNumber
+	op5
+	jb&cc5	~~start%~~loopNumber
+	op6
+	jb&cc6	~~start%~~loopNumber
+	op7
+	jb&cc7	~~start%~~loopNumber
+	op8
+	jb&cc8	~~start%~~loopNumber
+	op9
+	jb&cc9	~~start%~~loopNumber
+	op10
+	jb&cc10	~~start%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;restartorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restart2	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;restart2に対応するループがない
+	.exitm
+  .endif
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restart2に対応する*startがない
+	.exitm
+  .endif
+  .if cn=0
+~~blockNoReturn = 1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jbra	~~start%~i
+	.sall
+  .elif cn=1
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op1	~~start%~i
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op2	~~start%~i
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op3	~~start%~i
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op4	~~start%~i
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op5	~~start%~i
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op6	~~start%~i
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op7	~~start%~i
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op8	~~start%~i
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op9	~~start%~i
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op10	~~start%~i
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&op11	~~start%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;restart2の引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restart2and	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;restart2andに対応するループがない
+	.exitm
+  .endif
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restart2andに対応する*startがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;restart2andの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~start%~i
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~start%~i
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~start%~i
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~start%~i
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;restart2andの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+restart2or	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth<=1
+	.lall
+	.fail	1	;restart2orに対応するループがない
+	.exitm
+  .endif
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+  .if (~~blockType%~i<>~~DOSTART).and.(~~blockType%~i<>~~FORSTART).and.(~~blockType%~i<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;restart2orに対応する*startがない
+	.exitm
+  .endif
+  .if cn<=2
+	.lall
+	.fail	1	;restart2orの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~start%~i
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~start%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~start%~i
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~start%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~start%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~start%~i
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc1	~~start%~i
+	op2
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc2	~~start%~i
+	op3
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc3	~~start%~i
+	op4
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc4	~~start%~i
+	op5
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc5	~~start%~i
+	op6
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc6	~~start%~i
+	op7
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc7	~~start%~i
+	op8
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc8	~~start%~i
+	op9
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc9	~~start%~i
+	op10
+	.sall
+~i = ~~loopDepth-1
+~i = ~~loopNumber%~i
+	.lall
+	jb&cc10	~~start%~i
+	.sall
+  .else
+	.lall
+	.fail	1	;restart2orの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+start	.macro
+	.sizem	sz,cn
+	.sall
+  .if ~~loopDepth=0
+	.lall
+	.fail	1	;startに対応するループがない
+	.exitm
+  .endif
+  .if cn<>0
+	.lall
+	.fail	1	;startの引数が多すぎる
+	.exitm
+  .endif
+  .if (~~blockType<>~~DOSTART).and.(~~blockType<>~~FORSTART).and.(~~blockType<>~~FORSTARTLONG)
+	.lall
+	.fail	1	;startに対応する*startがない
+	.exitm
+  .endif
+	.lall
+~~start%~~blockNumber:
+	.endm
+
+;----------------------------------------------------------------
+while	.macro	op1,op2,op3,op4,op5,op6,op7,op8,op9,op10,op11	;最後はcc
+	.sizem	sz,cn
+	.sall
+  .if (~~blockType=~~DO).or.(~~blockType=~~DOSTART)
+;do～while
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn=0
+	.lall
+	.fail	1	;whileの引数が足りない
+	.exitm
+  .elif cn=1
+	.lall
+	jb&op1	~~redo%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jb&op2	~~redo%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jb&op3	~~redo%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jb&op4	~~redo%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jb&op5	~~redo%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jb&op6	~~redo%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jb&op7	~~redo%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jb&op8	~~redo%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jb&op9	~~redo%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jb&op10	~~redo%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jb&op11	~~redo%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;whileの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~break%~~loopNumber:
+	.sall
+~~loopDepth = ~~loopDepth-1
+~~loopNumber = ~~loopNumber%~~loopDepth
+~~loopType = ~~loopType%~~loopDepth
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+  .else
+;while～endwhile
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~WHILE
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~WHILE
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn=0
+	.lall
+	.fail	1	;whileの引数が足りない
+	.exitm
+  .elif cn=1
+	.lall
+	jbn&op1	~~break%~~loopNumber
+	.sall
+  .elif cn=2
+	.lall
+	op1
+	jbn&op2	~~break%~~loopNumber
+	.sall
+  .elif cn=3
+	.lall
+	op1
+	op2
+	jbn&op3	~~break%~~loopNumber
+	.sall
+  .elif cn=4
+	.lall
+	op1
+	op2
+	op3
+	jbn&op4	~~break%~~loopNumber
+	.sall
+  .elif cn=5
+	.lall
+	op1
+	op2
+	op3
+	op4
+	jbn&op5	~~break%~~loopNumber
+	.sall
+  .elif cn=6
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	jbn&op6	~~break%~~loopNumber
+	.sall
+  .elif cn=7
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	jbn&op7	~~break%~~loopNumber
+	.sall
+  .elif cn=8
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	jbn&op8	~~break%~~loopNumber
+	.sall
+  .elif cn=9
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	jbn&op9	~~break%~~loopNumber
+	.sall
+  .elif cn=10
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	jbn&op10	~~break%~~loopNumber
+	.sall
+  .elif cn=11
+	.lall
+	op1
+	op2
+	op3
+	op4
+	op5
+	op6
+	op7
+	op8
+	op9
+	op10
+	jbn&op11	~~break%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;whileの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~redo%~~loopNumber:
+	.sall
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+whileand	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if (~~blockType=~~DO).or.(~~blockType=~~DOSTART)
+;do～while
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;whileandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jb&cc2	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jb&cc3	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jb&cc4	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jb&cc5	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jb&cc6	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jb&cc7	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jb&cc8	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jb&cc9	~~redo%~~loopNumber
+@else:
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	@else
+	op2
+	jbn&cc2	@else
+	op3
+	jbn&cc3	@else
+	op4
+	jbn&cc4	@else
+	op5
+	jbn&cc5	@else
+	op6
+	jbn&cc6	@else
+	op7
+	jbn&cc7	@else
+	op8
+	jbn&cc8	@else
+	op9
+	jbn&cc9	@else
+	op10
+	jb&cc10	~~redo%~~loopNumber
+@else:
+	.sall
+  .else
+	.lall
+	.fail	1	;whileandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~break%~~loopNumber:
+	.sall
+~~loopDepth = ~~loopDepth-1
+~~loopNumber = ~~loopNumber%~~loopDepth
+~~loopType = ~~loopType%~~loopDepth
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+  .else
+;while～endwhile
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~WHILE
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~WHILE
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;whileandの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	op7
+	jbn&cc7	~~break%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	op7
+	jbn&cc7	~~break%~~loopNumber
+	op8
+	jbn&cc8	~~break%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	op7
+	jbn&cc7	~~break%~~loopNumber
+	op8
+	jbn&cc8	~~break%~~loopNumber
+	op9
+	jbn&cc9	~~break%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jbn&cc1	~~break%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	op7
+	jbn&cc7	~~break%~~loopNumber
+	op8
+	jbn&cc8	~~break%~~loopNumber
+	op9
+	jbn&cc9	~~break%~~loopNumber
+	op10
+	jbn&cc10	~~break%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;whileandの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~redo%~~loopNumber:
+	.sall
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+whileor	.macro	op1,cc1,op2,cc2,op3,cc3,op4,cc4,op5,cc5,op6,cc6,op7,cc7,op8,cc8,op9,cc9,op10,cc10
+	.sizem	sz,cn
+	.sall
+  .if (~~blockType=~~DO).or.(~~blockType=~~DOSTART)
+;do～while
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;whileorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jb&cc9	~~redo%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jb&cc9	~~redo%~~loopNumber
+	op10
+	jb&cc10	~~redo%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;whileorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~break%~~loopNumber:
+	.sall
+~~loopDepth = ~~loopDepth-1
+~~loopNumber = ~~loopNumber%~~loopDepth
+~~loopType = ~~loopType%~~loopDepth
+~~blockDepth = ~~blockDepth-1
+~~blockNumber = ~~blockNumber%~~blockDepth
+~~blockType = ~~blockType%~~blockDepth
+~~blockNoReturn = ~~blockNoReturn%~~blockDepth
+  .else
+;while～endwhile
+~~blockNumber%~~blockDepth = ~~blockNumber
+~~blockType%~~blockDepth = ~~blockType
+~~blockNoReturn%~~blockDepth = ~~blockNoReturn
+~~blockDepth = ~~blockDepth+1
+~~loopNumber%~~loopDepth = ~~loopNumber
+~~loopType%~~loopDepth = ~~loopType
+~~loopDepth = ~~loopDepth+1
+~~usedBlocks = ~~usedBlocks+1
+~~blockNumber = ~~usedBlocks
+~~blockType = ~~WHILE
+~~blockNoReturn = 0
+~~loopNumber = ~~usedBlocks
+~~loopType = ~~WHILE
+	.lall
+~~continue%~~loopNumber:
+	.sall
+  .if cn<=2
+	.lall
+	.fail	1	;whileorの引数が足りない
+	.exitm
+  .elif cn<=4
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jbn&cc2	~~break%~~loopNumber
+	.sall
+  .elif cn<=6
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jbn&cc3	~~break%~~loopNumber
+	.sall
+  .elif cn<=8
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jbn&cc4	~~break%~~loopNumber
+	.sall
+  .elif cn<=10
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jbn&cc5	~~break%~~loopNumber
+	.sall
+  .elif cn<=12
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jbn&cc6	~~break%~~loopNumber
+	.sall
+  .elif cn<=14
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jbn&cc7	~~break%~~loopNumber
+	.sall
+  .elif cn<=16
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jbn&cc8	~~break%~~loopNumber
+	.sall
+  .elif cn<=18
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jbn&cc9	~~break%~~loopNumber
+	.sall
+  .elif cn<=20
+	.lall
+	op1
+	jb&cc1	~~redo%~~loopNumber
+	op2
+	jb&cc2	~~redo%~~loopNumber
+	op3
+	jb&cc3	~~redo%~~loopNumber
+	op4
+	jb&cc4	~~redo%~~loopNumber
+	op5
+	jb&cc5	~~redo%~~loopNumber
+	op6
+	jb&cc6	~~redo%~~loopNumber
+	op7
+	jb&cc7	~~redo%~~loopNumber
+	op8
+	jb&cc8	~~redo%~~loopNumber
+	op9
+	jb&cc9	~~redo%~~loopNumber
+	op10
+	jbn&cc10	~~break%~~loopNumber
+	.sall
+  .else
+	.lall
+	.fail	1	;whileorの引数が多すぎる
+	.exitm
+  .endif
+	.lall
+~~redo%~~loopNumber:
+	.sall
+  .endif
+	.lall
+	.endm
+
+;----------------------------------------------------------------
+
+  .endif  ;__control2_mac__
+	.list

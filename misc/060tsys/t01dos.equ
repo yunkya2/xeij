@@ -1,0 +1,156 @@
+	.nlist
+
+_EXIT		equ	$FF00
+_GETCHAR	equ	$FF01
+_PUTCHAR	equ	$FF02
+_COMINP		equ	$FF03
+_COMOUT		equ	$FF04
+_PRNOUT		equ	$FF05
+_INPOUT		equ	$FF06
+_INKEY		equ	$FF07
+_GETC		equ	$FF08
+_PRINT		equ	$FF09
+_GETS		equ	$FF0A
+_KEYSNS		equ	$FF0B
+_KFLUSH		equ	$FF0C
+_FFLUSH		equ	$FF0D
+_CHGDRV		equ	$FF0E
+_DRVCTRL	equ	$FF0F
+_CONSNS		equ	$FF10
+_PRNSNS		equ	$FF11
+_CINSNS		equ	$FF12
+_COUTSNS	equ	$FF13
+_FATCHK		equ	$FF17
+_HENDSP		equ	$FF18
+_CURDRV		equ	$FF19
+_GETSS		equ	$FF1A
+_FGETC		equ	$FF1B
+_FGETS		equ	$FF1C
+_FPUTC		equ	$FF1D
+_FPUTS		equ	$FF1E
+_ALLCLOSE	equ	$FF1F
+_SUPER		equ	$FF20
+_FNCKEY		equ	$FF21
+_KNJCTRL	equ	$FF22
+_CONCTRL	equ	$FF23
+_KEYCTRL	equ	$FF24
+_INTVCS		equ	$FF25
+_PSPSET		equ	$FF26
+_GETTIM2	equ	$FF27
+_SETTIM2	equ	$FF28
+_NAMESTS	equ	$FF29
+_GETDATE	equ	$FF2A
+_SETDATE	equ	$FF2B
+_GETTIME	equ	$FF2C
+_SETTIME	equ	$FF2D
+_VERIFY		equ	$FF2E
+_DUP0		equ	$FF2F
+_VERNUM		equ	$FF30
+_KEEPPR		equ	$FF31
+_GETDPB		equ	$FF32
+_BREAKCK	equ	$FF33
+_DRVXCHG	equ	$FF34
+_INTVCG		equ	$FF35
+_DSKFRE		equ	$FF36
+_NAMECK		equ	$FF37
+_MKDIR		equ	$FF39
+_RMDIR		equ	$FF3A
+_CHDIR		equ	$FF3B
+_CREATE		equ	$FF3C
+_OPEN		equ	$FF3D
+_CLOSE		equ	$FF3E
+_READ		equ	$FF3F
+_WRITE		equ	$FF40
+_DELETE		equ	$FF41
+_SEEK		equ	$FF42
+_CHMOD		equ	$FF43
+_IOCTRL		equ	$FF44
+_DUP		equ	$FF45
+_DUP2		equ	$FF46
+_CURDIR		equ	$FF47
+_MALLOC		equ	$FF48
+_MFREE		equ	$FF49
+_SETBLOCK	equ	$FF4A
+_EXEC		equ	$FF4B
+_EXIT2		equ	$FF4C
+_WAIT		equ	$FF4D
+_FILES		equ	$FF4E
+_NFILES		equ	$FF4F
+
+~0~_SETPDB	equ	$FF50
+~0~_GETPDB	equ	$FF51
+~0~_SETENV	equ	$FF52
+~0~_GETENV	equ	$FF53
+~0~_VERIFYG	equ	$FF54
+~0~_COMMON	equ	$FF55
+~0~_RENAME	equ	$FF56
+~0~_FILEDATE	equ	$FF57
+~0~_MALLOC2	equ	$FF58
+~0~_MAKETMP	equ	$FF5A
+~0~_NEWFILE	equ	$FF5B
+~0~_LOCK	equ	$FF5C
+~0~_ASSIGN	equ	$FF5F
+
+~0~_MALLOC3	equ	$FF60		;新設
+~0~_SETBLOCK2	equ	$FF61		;新設
+~0~_MALLOC4	equ	$FF62		;新設
+~0~_S_MALLOC2	equ	$FF63		;新設
+
+~0~_FFLUSHMD	equ	$FF7A
+~0~_FFLUSH_SET	equ	$FF7A		;シャープ名
+~0~_OS_PATCH	equ	$FF7B
+~0~_GETFCB	equ	$FF7C
+~0~_GET_FCB_ADR	equ	$FF7C		;シャープ名
+~0~_S_MALLOC	equ	$FF7D
+~0~_S_MFREE	equ	$FF7E
+~0~_S_PROCESS	equ	$FF7F
+
+_SETPDB		equ	$FF80
+_GETPDB		equ	$FF81
+_SETENV		equ	$FF82
+_GETENV		equ	$FF83
+_VERIFYG	equ	$FF84
+_COMMON		equ	$FF85
+_RENAME		equ	$FF86
+_FILEDATE	equ	$FF87
+_MALLOC2	equ	$FF88
+_MAKETMP	equ	$FF8A
+_NEWFILE	equ	$FF8B
+_LOCK		equ	$FF8C
+_ASSIGN		equ	$FF8F
+
+_MALLOC3	equ	$FF90		;新設
+_SETBLOCK2	equ	$FF91		;新設
+_MALLOC4	equ	$FF92		;新設
+_S_MALLOC2	equ	$FF93		;新設
+
+_FFLUSHMD	equ	$FFAA
+_FFLUSH_SET	equ	$FFAA		;シャープ名
+_OS_PATCH	equ	$FFAB
+_GETFCB		equ	$FFAC
+_GET_FCB_ADR	equ	$FFAC		;シャープ名
+_S_MALLOC	equ	$FFAD
+_S_MFREE	equ	$FFAE
+_S_PROCESS	equ	$FFAF
+_EXITVC		equ	$FFF0
+_CTRLVC		equ	$FFF1
+_ERRJVC		equ	$FFF2
+_DISKRED	equ	$FFF3
+_DISKWRT	equ	$FFF4
+_INDOSFLG	equ	$FFF5
+_SUPER_JSR	equ	$FFF6
+_BUS_ERR	equ	$FFF7
+_OPEN_PR	equ	$FFF8
+_KILL_PR	equ	$FFF9
+_GET_PR		equ	$FFFA
+_SUSPEND_PR	equ	$FFFB
+_SLEEP_PR	equ	$FFFC
+_SEND_PR	equ	$FFFD
+_TIME_PR	equ	$FFFE
+_CHANGE_PR	equ	$FFFF
+
+DOS	.macro	num
+	.dc.w	num
+	.endm
+
+	.list

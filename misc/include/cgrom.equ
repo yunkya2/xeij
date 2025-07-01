@@ -1,0 +1,30 @@
+	.nlist
+  .ifndef __cgrom_equ__
+__cgrom_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	CGROM
+;
+;----------------------------------------------------------------
+
+;				   äJén		   èIóπ       í∑Ç≥    éÌóﬁ    ÉTÉCÉY  ï∂éöêî    îıçl
+CGROM_KANJI_16X16	equ	$00F00000	;$00F388BF  231616  ëSäpäøéö  16x16    7238   1ãÊÅ`8ãÊ,16ãÊÅ`84ãÊ
+;				$00F388C0	;$00F39FFF    5952  ãÛÇ´                      $00Ç≈è[ìU
+CGROM_ANK_8X8		equ	$00F3A000	;$00F3A7FF    2048  1/4äpANK   8x8      256   $00Å`$FF
+CGROM_ANK_8X16		equ	$00F3A800	;$00F3B7FF    4096  îºäpANK    8x16     256   $00Å`$FF
+CGROM_ANK_12X12		equ	$00F3B800	;$00F3CFFF    6144  1/4äpANK  12x12     256   $00Å`$FF
+CGROM_ANK_12X24		equ	$00F3D000	;$00F3FFFF   12288  îºäpANK   12x24     256   $00Å`$FF
+CGROM_KANJI_24X24	equ	$00F40000	;$00FBF3AF  521136  ëSäpäøéö  24x24    7238   1ãÊÅ`8ãÊ,16ãÊÅ`84ãÊ
+;				$00FBF3B0	;$00FBF316      80  ãÛÇ´                      $00Ç≈è[ìU
+CGROM_ANK_6X12_13	equ	$00FBF400	;$00FBFFFF    3072  îºäpANK    6x12     256   $00Å`$FFÅBIPLROM 1.3/1.6
+
+;à»â∫ÇÕIPLROMì‡
+CGROM_ANK_6X12_16	equ	$00FEF400	;$00FEFFFF    3072  îºäpANK    6x12     256   $00Å`$FFÅBIPLROM 1.6
+CGROM_ANK_6X12_103	equ	$00FFCFF6	;$00FFDBDD    3048  îºäpANK    6x12     254   $00Å`$FDÅBIPLROM 1.0(870318)
+CGROM_ANK_6X12_105	equ	$00FFD018	;$00FFDBFF    3048  îºäpANK    6x12     254   $00Å`$FDÅBIPLROM 1.0(870507)
+CGROM_ANK_6X12_11	equ	$00FFD344	;$00FFDF2B    3048  îºäpANK    6x12     254   $00Å`$FDÅBIPLROM 1.1
+CGROM_ANK_6X12_12	equ	$00FFD45E	;$00FFE045    3048  îºäpANK    6x12     254   $00Å`$FDÅBIPLROM 1.2
+
+  .endif  ;__cgrom_equ__
+	.list

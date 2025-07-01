@@ -1,0 +1,34 @@
+	.nlist
+  .ifndef __hdc_equ__
+__hdc_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	SASIハードディスクコントローラ
+;
+;----------------------------------------------------------------
+
+;HDCデータポート
+HDC_DATA	equ	$00E96001
+
+;HDCステータスポート
+;	---|MSG|C/D|I/O|BSY|REQ
+HDC_STATUS	equ	$00E96003
+HDC_DATAOUT	equ	%00000000
+HDC_DATAIN	equ	%00000100
+HDC_CMDOUT	equ	%00001000
+HDC_STSIN	equ	%00001100
+HDC_MSGIN	equ	%00011100
+HDC_BSY_BIT	equ	       1
+HDC_BSY		equ	%00000010
+HDC_REQ_BIT	equ	        0
+HDC_REQ		equ	%00000001
+
+;HDCリセットポート
+HDC_RESET	equ	$00E96005
+
+;HDCセレクションポート
+HDC_SELECTION	equ	$00E96007
+
+  .endif  ;__hdc_equ__
+	.list

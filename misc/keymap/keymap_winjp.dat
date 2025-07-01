@@ -1,0 +1,113 @@
+# os.name = Windows 10
+# os.version = 10.0
+# number extendedKeyCode keyChar keyCode keyLocation modifiersEx paramString
+1	27	27	27	1	0	KEY_PRESSED,keyCode=27,keyText=Esc,keyChar=Esc,keyLocation=KEY_LOCATION_STANDARD,rawCode=27,primaryLevelUnicode=27,scancode=1,extendedKeyCode=0x1b
+2	49	49	49	1	0	KEY_PRESSED,keyCode=49,keyText=1,keyChar='1',keyLocation=KEY_LOCATION_STANDARD,rawCode=49,primaryLevelUnicode=49,scancode=2,extendedKeyCode=0x31
+3	50	50	50	1	0	KEY_PRESSED,keyCode=50,keyText=2,keyChar='2',keyLocation=KEY_LOCATION_STANDARD,rawCode=50,primaryLevelUnicode=50,scancode=3,extendedKeyCode=0x32
+4	51	51	51	1	0	KEY_PRESSED,keyCode=51,keyText=3,keyChar='3',keyLocation=KEY_LOCATION_STANDARD,rawCode=51,primaryLevelUnicode=51,scancode=4,extendedKeyCode=0x33
+5	52	52	52	1	0	KEY_PRESSED,keyCode=52,keyText=4,keyChar='4',keyLocation=KEY_LOCATION_STANDARD,rawCode=52,primaryLevelUnicode=52,scancode=5,extendedKeyCode=0x34
+6	53	53	53	1	0	KEY_PRESSED,keyCode=53,keyText=5,keyChar='5',keyLocation=KEY_LOCATION_STANDARD,rawCode=53,primaryLevelUnicode=53,scancode=6,extendedKeyCode=0x35
+7	54	54	54	1	0	KEY_PRESSED,keyCode=54,keyText=6,keyChar='6',keyLocation=KEY_LOCATION_STANDARD,rawCode=54,primaryLevelUnicode=54,scancode=7,extendedKeyCode=0x36
+8	55	55	55	1	0	KEY_PRESSED,keyCode=55,keyText=7,keyChar='7',keyLocation=KEY_LOCATION_STANDARD,rawCode=55,primaryLevelUnicode=55,scancode=8,extendedKeyCode=0x37
+9	56	56	56	1	0	KEY_PRESSED,keyCode=56,keyText=8,keyChar='8',keyLocation=KEY_LOCATION_STANDARD,rawCode=56,primaryLevelUnicode=56,scancode=9,extendedKeyCode=0x38
+10	57	57	57	1	0	KEY_PRESSED,keyCode=57,keyText=9,keyChar='9',keyLocation=KEY_LOCATION_STANDARD,rawCode=57,primaryLevelUnicode=57,scancode=10,extendedKeyCode=0x39
+11	48	48	48	1	0	KEY_PRESSED,keyCode=48,keyText=0,keyChar='0',keyLocation=KEY_LOCATION_STANDARD,rawCode=48,primaryLevelUnicode=48,scancode=11,extendedKeyCode=0x30
+12	45	45	45	1	0	KEY_PRESSED,keyCode=45,keyText=マイナス,keyChar='-',keyLocation=KEY_LOCATION_STANDARD,rawCode=189,primaryLevelUnicode=45,scancode=12,extendedKeyCode=0x2d
+13	514	94	514	1	0	KEY_PRESSED,keyCode=514,keyText=曲折アクセント記号,keyChar='^',keyLocation=KEY_LOCATION_STANDARD,rawCode=222,primaryLevelUnicode=94,scancode=13,extendedKeyCode=0x202
+14	92	92	92	1	0	KEY_PRESSED,keyCode=92,keyText=バックスラッシュ,keyChar='\',keyLocation=KEY_LOCATION_STANDARD,rawCode=220,primaryLevelUnicode=92,scancode=125,extendedKeyCode=0x5c
+15	8	8	8	1	0	KEY_PRESSED,keyCode=8,keyText=Backspace,keyChar=Backspace,keyLocation=KEY_LOCATION_STANDARD,rawCode=8,primaryLevelUnicode=8,scancode=14,extendedKeyCode=0x8
+16	9	9	9	1	0	KEY_PRESSED,keyCode=9,keyText=Tab,keyChar=Tab,keyLocation=KEY_LOCATION_STANDARD,rawCode=9,primaryLevelUnicode=9,scancode=15,extendedKeyCode=0x9
+17	81	113	81	1	0	KEY_PRESSED,keyCode=81,keyText=Q,keyChar='q',keyLocation=KEY_LOCATION_STANDARD,rawCode=81,primaryLevelUnicode=113,scancode=16,extendedKeyCode=0x51
+18	87	119	87	1	0	KEY_PRESSED,keyCode=87,keyText=W,keyChar='w',keyLocation=KEY_LOCATION_STANDARD,rawCode=87,primaryLevelUnicode=119,scancode=17,extendedKeyCode=0x57
+19	69	101	69	1	0	KEY_PRESSED,keyCode=69,keyText=E,keyChar='e',keyLocation=KEY_LOCATION_STANDARD,rawCode=69,primaryLevelUnicode=101,scancode=18,extendedKeyCode=0x45
+20	82	114	82	1	0	KEY_PRESSED,keyCode=82,keyText=R,keyChar='r',keyLocation=KEY_LOCATION_STANDARD,rawCode=82,primaryLevelUnicode=114,scancode=19,extendedKeyCode=0x52
+21	84	116	84	1	0	KEY_PRESSED,keyCode=84,keyText=T,keyChar='t',keyLocation=KEY_LOCATION_STANDARD,rawCode=84,primaryLevelUnicode=116,scancode=20,extendedKeyCode=0x54
+22	89	121	89	1	0	KEY_PRESSED,keyCode=89,keyText=Y,keyChar='y',keyLocation=KEY_LOCATION_STANDARD,rawCode=89,primaryLevelUnicode=121,scancode=21,extendedKeyCode=0x59
+23	85	117	85	1	0	KEY_PRESSED,keyCode=85,keyText=U,keyChar='u',keyLocation=KEY_LOCATION_STANDARD,rawCode=85,primaryLevelUnicode=117,scancode=22,extendedKeyCode=0x55
+24	73	105	73	1	0	KEY_PRESSED,keyCode=73,keyText=I,keyChar='i',keyLocation=KEY_LOCATION_STANDARD,rawCode=73,primaryLevelUnicode=105,scancode=23,extendedKeyCode=0x49
+25	79	111	79	1	0	KEY_PRESSED,keyCode=79,keyText=O,keyChar='o',keyLocation=KEY_LOCATION_STANDARD,rawCode=79,primaryLevelUnicode=111,scancode=24,extendedKeyCode=0x4f
+26	80	112	80	1	0	KEY_PRESSED,keyCode=80,keyText=P,keyChar='p',keyLocation=KEY_LOCATION_STANDARD,rawCode=80,primaryLevelUnicode=112,scancode=25,extendedKeyCode=0x50
+27	512	64	512	1	0	KEY_PRESSED,keyCode=512,keyText=アット,keyChar='@',keyLocation=KEY_LOCATION_STANDARD,rawCode=192,primaryLevelUnicode=64,scancode=26,extendedKeyCode=0x200
+28	91	91	91	1	0	KEY_PRESSED,keyCode=91,keyText=左大カッコ,keyChar='[',keyLocation=KEY_LOCATION_STANDARD,rawCode=219,primaryLevelUnicode=91,scancode=27,extendedKeyCode=0x5b
+29	10	10	10	1	0	KEY_PRESSED,keyCode=10,keyText=Enter,keyChar=Enter,keyLocation=KEY_LOCATION_STANDARD,rawCode=13,primaryLevelUnicode=13,scancode=28,extendedKeyCode=0xa
+30	65	97	65	1	0	KEY_PRESSED,keyCode=65,keyText=A,keyChar='a',keyLocation=KEY_LOCATION_STANDARD,rawCode=65,primaryLevelUnicode=97,scancode=30,extendedKeyCode=0x41
+31	83	115	83	1	0	KEY_PRESSED,keyCode=83,keyText=S,keyChar='s',keyLocation=KEY_LOCATION_STANDARD,rawCode=83,primaryLevelUnicode=115,scancode=31,extendedKeyCode=0x53
+32	68	100	68	1	0	KEY_PRESSED,keyCode=68,keyText=D,keyChar='d',keyLocation=KEY_LOCATION_STANDARD,rawCode=68,primaryLevelUnicode=100,scancode=32,extendedKeyCode=0x44
+33	70	102	70	1	0	KEY_PRESSED,keyCode=70,keyText=F,keyChar='f',keyLocation=KEY_LOCATION_STANDARD,rawCode=70,primaryLevelUnicode=102,scancode=33,extendedKeyCode=0x46
+34	71	103	71	1	0	KEY_PRESSED,keyCode=71,keyText=G,keyChar='g',keyLocation=KEY_LOCATION_STANDARD,rawCode=71,primaryLevelUnicode=103,scancode=34,extendedKeyCode=0x47
+35	72	104	72	1	0	KEY_PRESSED,keyCode=72,keyText=H,keyChar='h',keyLocation=KEY_LOCATION_STANDARD,rawCode=72,primaryLevelUnicode=104,scancode=35,extendedKeyCode=0x48
+36	74	106	74	1	0	KEY_PRESSED,keyCode=74,keyText=J,keyChar='j',keyLocation=KEY_LOCATION_STANDARD,rawCode=74,primaryLevelUnicode=106,scancode=36,extendedKeyCode=0x4a
+37	75	107	75	1	0	KEY_PRESSED,keyCode=75,keyText=K,keyChar='k',keyLocation=KEY_LOCATION_STANDARD,rawCode=75,primaryLevelUnicode=107,scancode=37,extendedKeyCode=0x4b
+38	76	108	76	1	0	KEY_PRESSED,keyCode=76,keyText=L,keyChar='l',keyLocation=KEY_LOCATION_STANDARD,rawCode=76,primaryLevelUnicode=108,scancode=38,extendedKeyCode=0x4c
+39	59	59	59	1	0	KEY_PRESSED,keyCode=59,keyText=セミコロン,keyChar=';',keyLocation=KEY_LOCATION_STANDARD,rawCode=187,primaryLevelUnicode=59,scancode=39,extendedKeyCode=0x3b
+40	513	58	513	1	0	KEY_PRESSED,keyCode=513,keyText=コロン,keyChar=':',keyLocation=KEY_LOCATION_STANDARD,rawCode=186,primaryLevelUnicode=58,scancode=40,extendedKeyCode=0x201
+41	93	93	93	1	0	KEY_PRESSED,keyCode=93,keyText=右大カッコ,keyChar=']',keyLocation=KEY_LOCATION_STANDARD,rawCode=221,primaryLevelUnicode=93,scancode=43,extendedKeyCode=0x5d
+42	90	122	90	1	0	KEY_PRESSED,keyCode=90,keyText=Z,keyChar='z',keyLocation=KEY_LOCATION_STANDARD,rawCode=90,primaryLevelUnicode=122,scancode=44,extendedKeyCode=0x5a
+43	88	120	88	1	0	KEY_PRESSED,keyCode=88,keyText=X,keyChar='x',keyLocation=KEY_LOCATION_STANDARD,rawCode=88,primaryLevelUnicode=120,scancode=45,extendedKeyCode=0x58
+44	67	99	67	1	0	KEY_PRESSED,keyCode=67,keyText=C,keyChar='c',keyLocation=KEY_LOCATION_STANDARD,rawCode=67,primaryLevelUnicode=99,scancode=46,extendedKeyCode=0x43
+45	86	118	86	1	0	KEY_PRESSED,keyCode=86,keyText=V,keyChar='v',keyLocation=KEY_LOCATION_STANDARD,rawCode=86,primaryLevelUnicode=118,scancode=47,extendedKeyCode=0x56
+46	66	98	66	1	0	KEY_PRESSED,keyCode=66,keyText=B,keyChar='b',keyLocation=KEY_LOCATION_STANDARD,rawCode=66,primaryLevelUnicode=98,scancode=48,extendedKeyCode=0x42
+47	78	110	78	1	0	KEY_PRESSED,keyCode=78,keyText=N,keyChar='n',keyLocation=KEY_LOCATION_STANDARD,rawCode=78,primaryLevelUnicode=110,scancode=49,extendedKeyCode=0x4e
+48	77	109	77	1	0	KEY_PRESSED,keyCode=77,keyText=M,keyChar='m',keyLocation=KEY_LOCATION_STANDARD,rawCode=77,primaryLevelUnicode=109,scancode=50,extendedKeyCode=0x4d
+49	44	44	44	1	0	KEY_PRESSED,keyCode=44,keyText=カンマ,keyChar=',',keyLocation=KEY_LOCATION_STANDARD,rawCode=188,primaryLevelUnicode=44,scancode=51,extendedKeyCode=0x2c
+50	46	46	46	1	0	KEY_PRESSED,keyCode=46,keyText=ピリオド,keyChar='.',keyLocation=KEY_LOCATION_STANDARD,rawCode=190,primaryLevelUnicode=46,scancode=52,extendedKeyCode=0x2e
+51	47	47	47	1	0	KEY_PRESSED,keyCode=47,keyText=スラッシュ,keyChar='/',keyLocation=KEY_LOCATION_STANDARD,rawCode=191,primaryLevelUnicode=47,scancode=53,extendedKeyCode=0x2f
+52	92	92	92	1	0	KEY_PRESSED,keyCode=92,keyText=バックスラッシュ,keyChar='\',keyLocation=KEY_LOCATION_STANDARD,rawCode=226,primaryLevelUnicode=92,scancode=115,extendedKeyCode=0x5c
+53	32	32	32	1	0	KEY_PRESSED,keyCode=32,keyText=スペース,keyChar=' ',keyLocation=KEY_LOCATION_STANDARD,rawCode=32,primaryLevelUnicode=32,scancode=57,extendedKeyCode=0x20
+54	36	65535	36	1	0	KEY_PRESSED,keyCode=36,keyText=Home,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=36,primaryLevelUnicode=0,scancode=71,extendedKeyCode=0x24
+55	127	127	127	1	0	KEY_PRESSED,keyCode=127,keyText=Delete,keyChar=Delete,keyLocation=KEY_LOCATION_STANDARD,rawCode=46,primaryLevelUnicode=0,scancode=83,extendedKeyCode=0x7f
+56	33	65535	33	1	0	KEY_PRESSED,keyCode=33,keyText=Page Up,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=33,primaryLevelUnicode=0,scancode=73,extendedKeyCode=0x21
+57	34	65535	34	1	0	KEY_PRESSED,keyCode=34,keyText=Page Down,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=34,primaryLevelUnicode=0,scancode=81,extendedKeyCode=0x22
+58	35	65535	35	1	0	KEY_PRESSED,keyCode=35,keyText=End,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=35,primaryLevelUnicode=0,scancode=79,extendedKeyCode=0x23
+59	37	65535	37	1	0	KEY_PRESSED,keyCode=37,keyText=左,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=37,primaryLevelUnicode=0,scancode=75,extendedKeyCode=0x25
+60	38	65535	38	1	0	KEY_PRESSED,keyCode=38,keyText=上,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=38,primaryLevelUnicode=0,scancode=72,extendedKeyCode=0x26
+61	39	65535	39	1	0	KEY_PRESSED,keyCode=39,keyText=右,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=39,primaryLevelUnicode=0,scancode=77,extendedKeyCode=0x27
+62	40	65535	40	1	0	KEY_PRESSED,keyCode=40,keyText=下,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=40,primaryLevelUnicode=0,scancode=80,extendedKeyCode=0x28
+63	144	65535	144	4	0	KEY_PRESSED,keyCode=144,keyText=Num Lock,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=144,primaryLevelUnicode=0,scancode=69,extendedKeyCode=0x90
+64	111	47	111	4	0	KEY_PRESSED,keyCode=111,keyText=NumPad /,keyChar='/',keyLocation=KEY_LOCATION_NUMPAD,rawCode=111,primaryLevelUnicode=47,scancode=53,extendedKeyCode=0x6f
+65	106	42	106	4	0	KEY_PRESSED,keyCode=106,keyText=NumPad *,keyChar='*',keyLocation=KEY_LOCATION_NUMPAD,rawCode=106,primaryLevelUnicode=42,scancode=55,extendedKeyCode=0x6a
+66	109	45	109	4	0	KEY_PRESSED,keyCode=109,keyText=NumPad -,keyChar='-',keyLocation=KEY_LOCATION_NUMPAD,rawCode=109,primaryLevelUnicode=45,scancode=74,extendedKeyCode=0x6d
+67	36	65535	36	4	0	KEY_PRESSED,keyCode=36,keyText=Home,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=36,primaryLevelUnicode=0,scancode=71,extendedKeyCode=0x24
+68	38	65535	38	4	0	KEY_PRESSED,keyCode=38,keyText=上,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=38,primaryLevelUnicode=0,scancode=72,extendedKeyCode=0x26
+69	33	65535	33	4	0	KEY_PRESSED,keyCode=33,keyText=Page Up,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=33,primaryLevelUnicode=0,scancode=73,extendedKeyCode=0x21
+70	107	43	107	4	0	KEY_PRESSED,keyCode=107,keyText=NumPad +,keyChar='+',keyLocation=KEY_LOCATION_NUMPAD,rawCode=107,primaryLevelUnicode=43,scancode=78,extendedKeyCode=0x6b
+71	37	65535	37	4	0	KEY_PRESSED,keyCode=37,keyText=左,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=37,primaryLevelUnicode=0,scancode=75,extendedKeyCode=0x25
+72	12	65535	12	4	0	KEY_PRESSED,keyCode=12,keyText=クリア,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=12,primaryLevelUnicode=0,scancode=76,extendedKeyCode=0xc
+73	39	65535	39	4	0	KEY_PRESSED,keyCode=39,keyText=右,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=39,primaryLevelUnicode=0,scancode=77,extendedKeyCode=0x27
+75	35	65535	35	4	0	KEY_PRESSED,keyCode=35,keyText=End,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=35,primaryLevelUnicode=0,scancode=79,extendedKeyCode=0x23
+76	40	65535	40	4	0	KEY_PRESSED,keyCode=40,keyText=下,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=40,primaryLevelUnicode=0,scancode=80,extendedKeyCode=0x28
+77	34	65535	34	4	0	KEY_PRESSED,keyCode=34,keyText=Page Down,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=34,primaryLevelUnicode=0,scancode=81,extendedKeyCode=0x22
+78	10	10	10	4	0	KEY_PRESSED,keyCode=10,keyText=Enter,keyChar=Enter,keyLocation=KEY_LOCATION_NUMPAD,rawCode=13,primaryLevelUnicode=13,scancode=28,extendedKeyCode=0xa
+79	155	65535	155	4	0	KEY_PRESSED,keyCode=155,keyText=Insert,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_NUMPAD,rawCode=45,primaryLevelUnicode=0,scancode=82,extendedKeyCode=0x9b
+81	127	127	127	4	0	KEY_PRESSED,keyCode=127,keyText=Delete,keyChar=Delete,keyLocation=KEY_LOCATION_NUMPAD,rawCode=46,primaryLevelUnicode=0,scancode=83,extendedKeyCode=0x7f
+85	18	65535	18	2	512	KEY_PRESSED,keyCode=18,keyText=Alt,keyChar=未定義 keyChar,modifiers=Alt,extModifiers=Alt,keyLocation=KEY_LOCATION_LEFT,rawCode=18,primaryLevelUnicode=0,scancode=56,extendedKeyCode=0x12
+86	29	65535	29	1	0	KEY_PRESSED,keyCode=29,keyText=無変換,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=29,primaryLevelUnicode=0,scancode=123,extendedKeyCode=0x1d
+87	18	65535	18	3	8704	KEY_PRESSED,keyCode=18,keyText=Alt,keyChar=未定義 keyChar,modifiers=Alt+Altグラフ,extModifiers=Alt+Altグラフ,keyLocation=KEY_LOCATION_RIGHT,rawCode=18,primaryLevelUnicode=0,scancode=56,extendedKeyCode=0x12
+88	525	65535	525	1	0	KEY_PRESSED,keyCode=525,keyText=コンテキスト・メニュー,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=93,primaryLevelUnicode=0,scancode=93,extendedKeyCode=0x20d
+89	17	65535	17	3	128	KEY_PRESSED,keyCode=17,keyText=Ctrl,keyChar=未定義 keyChar,modifiers=Ctrl,extModifiers=Ctrl,keyLocation=KEY_LOCATION_RIGHT,rawCode=17,primaryLevelUnicode=0,scancode=29,extendedKeyCode=0x11
+94	155	65535	155	1	0	KEY_PRESSED,keyCode=155,keyText=Insert,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=45,primaryLevelUnicode=0,scancode=82,extendedKeyCode=0x9b
+97	19	65535	19	1	0	KEY_PRESSED,keyCode=19,keyText=一時停止,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=19,primaryLevelUnicode=0,scancode=0,extendedKeyCode=0x13
+99	112	65535	112	1	0	KEY_PRESSED,keyCode=112,keyText=F1,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=112,primaryLevelUnicode=0,scancode=59,extendedKeyCode=0x70
+100	113	65535	113	1	0	KEY_PRESSED,keyCode=113,keyText=F2,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=113,primaryLevelUnicode=0,scancode=60,extendedKeyCode=0x71
+101	114	65535	114	1	0	KEY_PRESSED,keyCode=114,keyText=F3,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=114,primaryLevelUnicode=0,scancode=61,extendedKeyCode=0x72
+102	115	65535	115	1	0	KEY_PRESSED,keyCode=115,keyText=F4,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=115,primaryLevelUnicode=0,scancode=62,extendedKeyCode=0x73
+103	116	65535	116	1	0	KEY_PRESSED,keyCode=116,keyText=F5,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=116,primaryLevelUnicode=0,scancode=63,extendedKeyCode=0x74
+104	117	65535	117	1	0	KEY_PRESSED,keyCode=117,keyText=F6,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=117,primaryLevelUnicode=0,scancode=64,extendedKeyCode=0x75
+105	118	65535	118	1	0	KEY_PRESSED,keyCode=118,keyText=F7,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=118,primaryLevelUnicode=0,scancode=65,extendedKeyCode=0x76
+106	119	65535	119	1	0	KEY_PRESSED,keyCode=119,keyText=F8,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=119,primaryLevelUnicode=0,scancode=66,extendedKeyCode=0x77
+107	120	65535	120	1	0	KEY_PRESSED,keyCode=120,keyText=F9,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=120,primaryLevelUnicode=0,scancode=67,extendedKeyCode=0x78
+108	121	65535	121	1	0	KEY_PRESSED,keyCode=121,keyText=F10,keyChar=未定義 keyChar,keyLocation=KEY_LOCATION_STANDARD,rawCode=121,primaryLevelUnicode=0,scancode=68,extendedKeyCode=0x79
+112	16	65535	16	2	64	KEY_PRESSED,keyCode=16,keyText=Shift,keyChar=未定義 keyChar,modifiers=Shift,extModifiers=Shift,keyLocation=KEY_LOCATION_LEFT,rawCode=16,primaryLevelUnicode=0,scancode=42,extendedKeyCode=0x10
+113	17	65535	17	2	128	KEY_PRESSED,keyCode=17,keyText=Ctrl,keyChar=未定義 keyChar,modifiers=Ctrl,extModifiers=Ctrl,keyLocation=KEY_LOCATION_LEFT,rawCode=17,primaryLevelUnicode=0,scancode=29,extendedKeyCode=0x11
+323	103	55	103	4	0	KEY_PRESSED,keyCode=103,keyText=NumPad-7,keyChar='7',keyLocation=KEY_LOCATION_NUMPAD,rawCode=103,primaryLevelUnicode=55,scancode=71,extendedKeyCode=0x67
+324	104	56	104	4	0	KEY_PRESSED,keyCode=104,keyText=NumPad-8,keyChar='8',keyLocation=KEY_LOCATION_NUMPAD,rawCode=104,primaryLevelUnicode=56,scancode=72,extendedKeyCode=0x68
+325	105	57	105	4	0	KEY_PRESSED,keyCode=105,keyText=NumPad-9,keyChar='9',keyLocation=KEY_LOCATION_NUMPAD,rawCode=105,primaryLevelUnicode=57,scancode=73,extendedKeyCode=0x69
+327	100	52	100	4	0	KEY_PRESSED,keyCode=100,keyText=NumPad-4,keyChar='4',keyLocation=KEY_LOCATION_NUMPAD,rawCode=100,primaryLevelUnicode=52,scancode=75,extendedKeyCode=0x64
+328	101	53	101	4	0	KEY_PRESSED,keyCode=101,keyText=NumPad-5,keyChar='5',keyLocation=KEY_LOCATION_NUMPAD,rawCode=101,primaryLevelUnicode=53,scancode=76,extendedKeyCode=0x65
+329	102	54	102	4	0	KEY_PRESSED,keyCode=102,keyText=NumPad-6,keyChar='6',keyLocation=KEY_LOCATION_NUMPAD,rawCode=102,primaryLevelUnicode=54,scancode=77,extendedKeyCode=0x66
+331	97	49	97	4	0	KEY_PRESSED,keyCode=97,keyText=NumPad-1,keyChar='1',keyLocation=KEY_LOCATION_NUMPAD,rawCode=97,primaryLevelUnicode=49,scancode=79,extendedKeyCode=0x61
+332	98	50	98	4	0	KEY_PRESSED,keyCode=98,keyText=NumPad-2,keyChar='2',keyLocation=KEY_LOCATION_NUMPAD,rawCode=98,primaryLevelUnicode=50,scancode=80,extendedKeyCode=0x62
+333	99	51	99	4	0	KEY_PRESSED,keyCode=99,keyText=NumPad-3,keyChar='3',keyLocation=KEY_LOCATION_NUMPAD,rawCode=99,primaryLevelUnicode=51,scancode=81,extendedKeyCode=0x63
+335	96	48	96	4	0	KEY_PRESSED,keyCode=96,keyText=NumPad-0,keyChar='0',keyLocation=KEY_LOCATION_NUMPAD,rawCode=96,primaryLevelUnicode=48,scancode=82,extendedKeyCode=0x60
+337	110	46	110	4	0	KEY_PRESSED,keyCode=110,keyText=NumPad .,keyChar='.',keyLocation=KEY_LOCATION_NUMPAD,rawCode=110,primaryLevelUnicode=46,scancode=83,extendedKeyCode=0x6e
+368	16	65535	16	3	64	KEY_PRESSED,keyCode=16,keyText=Shift,keyChar=未定義 keyChar,modifiers=Shift,extModifiers=Shift,keyLocation=KEY_LOCATION_RIGHT,rawCode=16,primaryLevelUnicode=0,scancode=42,extendedKeyCode=0x10

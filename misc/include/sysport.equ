@@ -1,0 +1,25 @@
+	.nlist
+  .ifndef __sysport_equ__
+__sysport_equ__	equ	1
+
+;----------------------------------------------------------------
+;
+;	システムポート
+;
+;----------------------------------------------------------------
+
+SYSPORT_CONTRAST	equ	$00E8E001	;.b コントラスト。0=暗～15=明
+SYSPORT_TV		equ	$00E8E003	;.b TV電源(ON/OFF)/TVリモコン|FIELD|シャッター左(CLOSE/OPEN)|シャッター右(CLOSE/OPEN)
+SYSPORT_VIDEO		equ	$00E8E005	;.b 画像入力コントロール
+SYSPORT_MISC		equ	$00E8E007	;.b キージャック(抜/差)/キーデータ(送信不可/送信可)|NMIリセット|HRL|解像度LED(消灯/点灯)
+SYSPORT_NMI_BIT		equ	      2
+SYSPORT_NMI		equ	%00000100
+SYSPORT_HRL_BIT		equ	       1
+SYSPORT_HRL		equ	%00000010
+SYSPORT_WAIT		equ	$00E8E009	;.b メモリアクセスウェイト。ROM####|RAM####。$00=なし,$04=16MHz相当,$0A=10MHz相当
+SYSPORT_MODEL		equ	$00E8E00B	;.b 機種判別。$DC=X68030,$FE=XVIで16MHz,$FF=XVI以前で10MHz
+SYSPORT_SRAM		equ	$00E8E00D	;.b SRAM書き込み制御。$31=許可,その他=禁止
+SYSPORT_POWER		equ	$00E8E00F	;.b フロント電源スイッチがOFFのとき$00→$0F→$0Fで電源OFF
+
+  .endif  ;__sysport_equ__
+	.list
