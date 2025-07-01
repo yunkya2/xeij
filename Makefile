@@ -89,6 +89,9 @@ ifeq ("$(BOOT)","")
 BOOT = misc
 endif
 
+run: gen
+	java.exe -jar $(PROGRAM).jar
+
 testgen: gen
 	$(JAVA) -jar $(PROGRAM).jar -boot=$(BOOT) $(PARAM)
 
