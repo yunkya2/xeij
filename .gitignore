@@ -1,0 +1,7 @@
+manifest.txt
+*.jar
+*.class
+*.dll
+xeijwin/*.h
+xeijwin/*.o
+CGROM.DAT
