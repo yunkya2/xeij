@@ -427,6 +427,7 @@ public class Settings {
     "rs232cconnection;Terminal+%E2%87%94+AUX;" +  //接続。textをURLEncoderにかけて/で連結
     "terminalsettings;38400/B8/PN/S1/RTS;" +  //ターミナルの通信設定。38400などを/で連結
     "additionalport;none;" +  //追加ポート。portDescriptorを,で連結。エンコード
+    "tcpipport;12345;" +
     //XT3
     "xt3dipsw;3;" +  //Xellent30のDIPSW(0～3)
     "xt3memorykb;256;" +  //Xellent30のメモリのサイズ(256/1024)

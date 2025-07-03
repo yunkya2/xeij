@@ -45,9 +45,15 @@ public class RS232CTerminal {
   //SerialPort
   public static SerialPort[] trmPortArray;  //[row-1]=SerialPort。SerialPortの配列。じょいぽーとU君とすかじーU君改を含まない
   public static int trmNumberOfPorts;  //SerialPortの数
+  //TCP/IP
+  public static int trmTCPIPPort;  //TCP/IPポート番号
+  public static ServerSocket trmTCPIPServerSocket;  //TCP/IPサーバソケット
+  public static Socket trmTCPIPSocket;  //TCP/IPソケット
+  public static InputStream trmTCPIPInputStream;  //TCP/IP入力ストリーム
+  public static OutputStream trmTCPIPOutputStream;  //TCP/IP出力ストリーム
   //行
   //  Terminal,SerialPort,SerialPort,…
-  public static int trmRows;  //行数。1+trmNumberOfPorts
+  public static int trmRows;  //行数。1+trmNumberOfPorts+1
   public static String[] trmRowName;  //行の名前
   public static int[] trmRowToCol;  //行に接続している列。なければ-1
   //AUX*
@@ -87,6 +93,15 @@ public class RS232CTerminal {
   //    スレッドでキューをポーリングする
   //      データがあれば取り出してwriteBytesでjSerialCommに渡す
   //      writeBytesがブロックするとポーリングが止まる
+  //  SerialPortから送信するとき。TCP/IPが受信するとき
+  //    TCP/IP受信スレッドがinputStreamからreadしてキューに書き込む
+  //    キューが満杯になったら空きができるまで待つ
+  //    通信相手が切断すると受信スレッドを終了する
+  //  SerialPortが受信するとき。TCP/IPへ送信するとき
+  //    スレッドでキューをポーリングする
+  //      データがあれば取り出してoutputStreamにwriteする
+  //      writeがブロックするとポーリングが止まる
+  //    writeがエラー、または受信スレッドが終了していたら接続断とみなし、acceptで次の接続を待つ
   static class Connection implements SerialPortDataListener {
     int row;  //行。Terminal,SerialPort,SerialPort,…
     int col;  //列。Terminal,AUX,AUX2,…。row==0&&col==0は不可
@@ -181,6 +196,97 @@ public class RS232CTerminal {
         }  //while polling
       }  //run
     }  //class SerialPortThread
+
+    //  ?→TCP/IPポーリングスレッド
+    class TCPIPThread extends Thread {
+      @Override public void run () {
+        while (polling) {
+          try {
+            trmTCPIPSocket = trmTCPIPServerSocket.accept ();  //TCP/IPポートへの接続を待つ
+            try {
+              System.out.println(Multilingual.mlnJapanese ?
+                                 "TCP/IP接続を受け付けました: " + 
+                                  trmTCPIPSocket.getInetAddress () + ":" + trmTCPIPSocket.getPort () :
+                                "TCP/IP connection accepted: " + 
+                                  trmTCPIPSocket.getInetAddress () + ":" + trmTCPIPSocket.getPort ());
+              trmTCPIPInputStream = trmTCPIPSocket.getInputStream ();
+              trmTCPIPOutputStream = trmTCPIPSocket.getOutputStream ();
+              ByteQueue queue = col2rowQueue;
+
+              Thread thread = new Thread(() -> {
+                //TCP/IP -> キュー 受信スレッド
+                try {
+                  for (;;) {
+                    byte[] b = new byte[256];
+                    int read = trmTCPIPInputStream.read (b, 0, b.length);
+                    if (read < 0) {
+                      break;  // 接続が切断された
+                    }
+                    int off = 0;
+                    // 受信したデータをキューの空きを確認しながら書き込む
+                    while (off < read) {
+                      int k = Math.min (read - off, row2colQueue.unused());
+                      if (k == 0) {
+                        try {
+                          Thread.sleep (10);
+                        } catch (InterruptedException ie) {
+                        }
+                      } else {
+                        row2colQueue.write (b, off, k);
+                        off += k;
+                      }
+                    }
+//                    for (byte c : b) {
+//                      System.out.print((char)(c & 0xFF));
+//                    }
+                  }
+                } catch (IOException ioe) {
+                }
+                System.out.println(Multilingual.mlnJapanese ?
+                                   "TCP/IP接続が切断されました" :
+                                   "TCP/IP connection closed");
+              });
+              thread.start();
+
+              //キュー -> TCP/IP 送信処理
+              while (polling) {
+                if (!thread.isAlive()) {
+                  trmTCPIPSocket.close(); // 受信スレッドが終了したので接続を切って再接続を待つ
+                  break;
+                }
+                if (col2rowReset) {
+                  col2rowReset = false;
+                  queue.clear ();
+                } else {
+                  for (int k = queue.used (); k != 0; k = queue.used ()) {  //キューが空になるまでスリープしない
+                    byte[] b = new byte[k];
+                    queue.read (b, 0, k);  //キューから読み出して
+                    trmTCPIPOutputStream.write (b);
+                    trmTCPIPOutputStream.flush ();  //TCP/IPへ書き込む。ブロックすることがある
+//                    System.out.print("\u001b[31m");
+//                    for (byte c : b) {
+//                      System.out.print((char)(c & 0xFF));
+//                    }
+//                    System.out.println("\u001b[m");
+                  }
+                }
+                try {
+                  Thread.sleep (10);
+                } catch (InterruptedException ie) {
+                }
+              }
+            } catch (IOException ioe) {
+              System.out.println(Multilingual.mlnJapanese ?
+                                 "TCP/IP接続が切断されました" :
+                                 "TCP/IP connection closed");
+              trmTCPIPSocket.close();
+            }
+          } catch (IOException ioe) {
+            break;
+          }
+        } //while polling
+      }  //run
+    }  //class TCPIPThread
 
   }  //class Connection
 
@@ -345,7 +451,7 @@ public class RS232CTerminal {
         System.out.printf ("flowcontrol=%s\n", rts ? "rts" : xon ? "xon" : "none");
       }
       int row = trmColToRow[1];
-      SerialPort port = row < 1 ? null : trmPortArray[row - 1];
+      SerialPort port = row < 1 ? null : (row - 1 >= trmNumberOfPorts ? null : trmPortArray[row - 1]);
       if (port != null) {
         port.setFlowControl (rts ? (SerialPort.FLOW_CONTROL_RTS_ENABLED |
                                     SerialPort.FLOW_CONTROL_CTS_ENABLED) :
@@ -398,6 +504,7 @@ public class RS232CTerminal {
   public static SendThread trmSendThread;  //送信スレッド
   //追加ポート
   public static JTextField trmAdditionalTextField;
+  public static JSpinner trmTCPIPPortSpinner;
 
   //trmInitConnection ()
   //  接続を初期化する
@@ -481,8 +588,14 @@ public class RS232CTerminal {
       } catch (UnsupportedEncodingException uee) {
         text = "";
       }
-      trmAdditionalTextField = ComponentFactory.createTextField (text, 30);
+      trmAdditionalTextField = ComponentFactory.createTextField (text, 20);
     }
+    trmTCPIPPort = Settings.sgsGetInt ("tcpipport", 12345);
+    trmTCPIPPortSpinner = ComponentFactory.createDecimalSpinner (trmTCPIPPort, 1024, 65535, 1, 0, new ChangeListener() {
+      @Override public void stateChanged(ChangeEvent ce) {
+        Settings.sgsPutInt ("tcpipport", trmTCPIPPort);
+      }
+    });
     //接続
     trmConnectionArray = new Connection[0];
     trmConnectionBox = ComponentFactory.createVerticalBox (
@@ -493,6 +606,11 @@ public class RS232CTerminal {
           "ja", "追加ポート "
           ),
         trmAdditionalTextField,
+        Multilingual.mlnText (
+          ComponentFactory.createLabel (" TCP/IP port"),
+          "ja", " TCP/IPポート "
+          ),
+        trmTCPIPPortSpinner,
         Box.createHorizontalGlue ()
         )
       );
@@ -635,13 +753,14 @@ public class RS232CTerminal {
     trmNumberOfPorts = portList.size ();
     trmPortArray = portList.toArray (new SerialPort[trmNumberOfPorts]);
     //行
-    trmRows = 1 + trmNumberOfPorts;
+    trmRows = 1 + trmNumberOfPorts + 1;
     trmRowName = new String[trmRows];
     trmRowName[0] = "Terminal";
-    for (int row = 1; row < trmRows; row++) {
-      SerialPort port = trmPortArray[row - 1];
-      trmRowName[row] = port.getSystemPortName () + "(" + port.getPortDescription () + ")";
+    for (int n = 0; n < trmNumberOfPorts; n++) {
+      SerialPort port = trmPortArray[n];
+      trmRowName[n + 1] = port.getSystemPortName () + "(" + port.getPortDescription () + ")";
     }
+    trmRowName[trmRows - 1] = "TCP/IP";
     trmRowToCol = new int[trmRows];
     Arrays.fill (trmRowToCol, -1);
     //AUX*
@@ -761,7 +880,7 @@ public class RS232CTerminal {
     //キューを作る
     connection.row2colQueue = new ByteQueue ();
     connection.col2rowQueue = new ByteQueue ();
-    if (0 < connection.row) {  //SerialPort→?
+    if (0 < connection.row && connection.row - 1 < trmNumberOfPorts) {  //SerialPort→?
       //シリアルポートを開く
       SerialPort port = trmPortArray[connection.row - 1];
       port.openPort ();
@@ -774,13 +893,26 @@ public class RS232CTerminal {
       trmReflectSettings (connection.col);
       //シリアルポートデータリスナーを設定する
       port.addDataListener (connection);
+    } else if (connection.row - 1 == trmNumberOfPorts) {  // TCP/IP→?
+      //TCP/IPポートを開く
+      try {
+        trmTCPIPServerSocket = new ServerSocket (trmTCPIPPort);
+        System.out.println (Multilingual.mlnJapanese ?
+                            connection.text + " を開きました (ポート " + trmTCPIPPort + ")" :
+                            connection.text + " opened (Port " + trmTCPIPPort + ")");
+      } catch (IOException ioe) {
+        System.out.println (Multilingual.mlnJapanese ?
+                            "TCP/IP接続を開始できませんでした: " + ioe.getMessage () :
+                            "Failed to start TCP/IP connection: " + ioe.getMessage ());
+      }
     }
     //ポーリングスレッドを開始する
     connection.polling = true;
     connection.row2colThread = (connection.col == 0 ? connection.new TerminalThread () :  //?→Terminal
                                 null);  //?→AUX
     connection.col2rowThread = (connection.row == 0 ? connection.new TerminalThread () :  //Terminal→?
-                                connection.new SerialPortThread ());  //SerialPort→?
+                                (connection.row - 1 < trmNumberOfPorts ? connection.new SerialPortThread () :  //SeralPort→?
+                                 connection.new TCPIPThread()));  //TCP/IP→?
     for (int i = 0; i < 2; i++) {
       Thread thread = (i == 0 ? connection.row2colThread : connection.col2rowThread);
       if (thread != null) {
@@ -812,6 +944,23 @@ public class RS232CTerminal {
     trmRowToCol[connection.row] = -1;
     trmColToRow[connection.col] = -1;
     trmUpdateComponents ();
+    if (connection.row - 1 == trmNumberOfPorts) {  // TCP/IP
+      //先にTCP/IP接続を閉じる (accept待ちをエラー終了させる)
+      try {
+        if (trmTCPIPServerSocket != null) {
+          trmTCPIPServerSocket.close ();
+          trmTCPIPServerSocket = null;
+        }
+        if (trmTCPIPSocket != null) {
+          trmTCPIPSocket.close ();
+          trmTCPIPSocket = null;
+        }
+      } catch (IOException ioe) {
+      }
+      System.out.println (Multilingual.mlnJapanese ?
+                          connection.text + " を閉じました (ポート " + trmTCPIPPort + ")" :
+                          connection.text + " closed (Port " + trmTCPIPPort + ")");
+    }
     //ポーリングティッカーを終了する
     if (trmAUXConnection != null) {
       TickerQueue.tkqRemove (trmAUXTicker);
@@ -836,7 +985,7 @@ public class RS232CTerminal {
     if (connection.col == 1) {  //?→AUX
       TickerQueue.tkqRemove (trmAUXSendTicker);  //送信ティッカーを消去
     }
-    if (0 < connection.row) {  //SerialPort
+    if (0 < connection.row && connection.row - 1 < trmNumberOfPorts) {  //SerialPort
       SerialPort port = trmPortArray[connection.row - 1];
       //シリアルポートデータリスナーを削除する
       port.removeDataListener ();
@@ -902,7 +1051,7 @@ public class RS232CTerminal {
   //  通信設定をSerialPortに反映させる
   public static void trmReflectSettings (int col) {
     int row = trmColToRow[col];
-    SerialPort port = row <= 0 ? null : trmPortArray[row - 1];
+    SerialPort port = row < 1 ? null : (row - 1 >= trmNumberOfPorts ? null : trmPortArray[row - 1]);
     if (col == 0) {  //Terminal
       String baudRate = trmBaudRateArray[trmBaudRateIndex];
       String dataBits = trmDataBitsArray[trmDataBitsIndex];
